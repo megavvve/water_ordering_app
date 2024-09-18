@@ -39,8 +39,9 @@ Future<void> main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
   await setupLocator();
-  //await AppWrite().getAccount().deleteSession(sessionId: 'current');
-  //getIt<LocalSavedData>().clearAllData();
+  
+  // await AppWrite().getAccount().deleteSession(sessionId: 'current');
+  // getIt<LocalSavedData>().clearAllData();
 
   FirebaseMessaging.onMessage.listen((RemoteMessage message) {
     String payloadData = jsonEncode(message.data);
@@ -102,7 +103,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
             getIt<DelivererRepository>().updateDeliverer(
               deliverer.copyWith(
                 isAvailable: false,
-                waterType: '',
+          
               ),
             );
           }
@@ -123,9 +124,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
             );
           }
         }
-        // Приложение снова активно
         print("Приложение снова активно");
-        // Здесь можно выполнить действия при возобновлении приложения
       }
     } catch (e) {
       print('не получилось()');
@@ -230,7 +229,7 @@ class MyHomePage extends StatelessWidget {
                             String initialRoute = 'profile';
                             try {
                               await getIt<AppWrite>().getAccount().get();
-                              //await AppWrite().getAccount().get();
+                            
                               final userId = LocalSavedData().getUserId();
                               final user = await getIt<GetUserById>().call(
                                 userId,
@@ -243,7 +242,7 @@ class MyHomePage extends StatelessWidget {
                                       await getIt<GetDelivererById>().call(
                                     LocalSavedData().getUserId(),
                                   );
-                                  if (deliverer?.isAvailable == true) {
+                                  if (deliverer?.isAvailable == true&& deliverer!.waterType.isNotEmpty) {
                                     initialRoute = 'line';
                                   } else {
                                     initialRoute = 'delivery';
@@ -255,7 +254,7 @@ class MyHomePage extends StatelessWidget {
                               initialRoute = 'signInSelection';
                             }
 
-                            // Use the context from the Builder widget
+                          
                             SetPageWithoutBack(context, initialRoute);
                           },
                           style: btnStl,

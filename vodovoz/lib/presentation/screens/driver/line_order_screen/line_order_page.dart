@@ -220,7 +220,7 @@ class _LineOrderPageState extends State<LineOrderPage> {
                             );
                           } else if (snapshot.hasData) {
                             final userPosition = snapshot.data!;
-                            print(userPosition);
+
                             return FutureBuilder<List<Order>>(
                               future: getIt<GeoService>().searchOrdersNearby(
                                 orders: state.orders,
@@ -236,7 +236,10 @@ class _LineOrderPageState extends State<LineOrderPage> {
                                   );
                                 } else if (snapshot.hasError) {
                                   return Center(
-                                      child: Text('Ошибка: ${snapshot.error}'));
+                                    child: Text(
+                                      'Ошибка: ${snapshot.error}',
+                                    ),
+                                  );
                                 } else if (snapshot.hasData &&
                                     snapshot.data!.isNotEmpty) {
                                   final nearbyOrders = snapshot.data!;
@@ -244,21 +247,26 @@ class _LineOrderPageState extends State<LineOrderPage> {
                                     slivers: [
                                       SliverPadding(
                                         padding: EdgeInsets.symmetric(
-                                            horizontal: 16.0.w,
-                                            vertical: 12.0.h),
+                                          horizontal: 16.0.w,
+                                          vertical: 12.0.h,
+                                        ),
                                         sliver: SliverList(
                                           delegate: SliverChildBuilderDelegate(
                                             (context, index) {
-                                              final order = nearbyOrders[index];
+
+                                              Order order = nearbyOrders[index];
                                               return Padding(
                                                 padding: EdgeInsets.symmetric(
-                                                    vertical: 8.0.h),
+                                                  vertical: 8.0.h,
+                                                ),
                                                 child: OrderCard(
                                                   order: order,
                                                   onAccept: () async {
                                                     delivererOrderBloc.add(
-                                                        AcceptPendingOrder(
-                                                            order));
+                                                      AcceptPendingOrder(
+                                                        order,
+                                                      ),
+                                                    );
                                                   },
                                                   onReject: () {
                                                     showCancelDialog(
@@ -267,8 +275,11 @@ class _LineOrderPageState extends State<LineOrderPage> {
                                                       (Order order,
                                                           String status) async {
                                                         delivererOrderBloc.add(
-                                                            UpdateOrderStatus(
-                                                                order, status));
+                                                          RejectPendingOrder(
+                                                            order
+                                                            
+                                                          ),
+                                                        );
                                                       },
                                                     );
                                                   },

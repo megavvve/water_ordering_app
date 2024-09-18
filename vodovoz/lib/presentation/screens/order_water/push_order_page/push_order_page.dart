@@ -304,6 +304,7 @@ class _PushOrderPageState extends State<PushOrderPage> {
                         ? Padding(
                             padding: EdgeInsets.all(10.sp),
                             child: SizedBox(
+                              height: 60.h,
                               width: 300.w,
                               child: FilledButton(
                                 onPressed: pushOrder,

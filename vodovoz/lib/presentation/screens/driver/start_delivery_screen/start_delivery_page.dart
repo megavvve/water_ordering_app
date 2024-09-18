@@ -13,6 +13,7 @@ import 'package:vodovoz/domain/repositories/storage_repository.dart';
 import 'package:vodovoz/domain/repositories/user/user_repository.dart';
 import 'package:vodovoz/injection_container.dart';
 import 'package:vodovoz/presentation/providers/form_change_notifier.dart';
+import 'package:vodovoz/presentation/widgets/enums/user_type.dart';
 import 'package:vodovoz/presentation/widgets/widgets_for_getting.dart';
 import 'package:vodovoz/presentation/widgets/navigation/drawer.dart';
 import 'package:vodovoz/presentation/widgets/navigation/set_page.dart';
@@ -57,9 +58,10 @@ class _StartDeliveryPageState extends State<StartDeliveryPage> {
   Future<void> updateDeliverer() async {
     final token = await PushNotifications.getDeviceToken();
     if (user != null && selectedWaterType != null) {
-      userRepository.updateUser(user!.copyWith(token: token));
+      userRepository.updateUser(user!.copyWith(token: token,userType: UserType.deliverer.name));
       Deliverer? deliverer = await delivererRepository.getDeliverer(userid);
       if (deliverer != null) {
+        
         deliverer.waterType = selectedWaterType!;
         deliverer.isAvailable = true;
         await delivererRepository.saveDeliverer(deliverer);

@@ -5,25 +5,32 @@ import 'package:vodovoz/domain/repositories/geolocation_repository.dart';
 import 'package:vodovoz/injection_container.dart';
 import 'package:vodovoz/presentation/providers/active_delivery_provider.dart';
 
-Future<void> loadDeliverers(String waterType,ActiveDeliveryProvider activeDeliveryProvider,AppWrite appWriteService) async {
-    final delivererRepository = getIt<DelivererRepository>();
-    List<Deliverer> deliverers = await delivererRepository
-        .getDeliverersByWaterTypeAndIsOnline(waterType);
+Future<void> loadDeliverers(
+  String waterType,
+  ActiveDeliveryProvider activeDeliveryProvider,
+  AppWrite appWriteService,
+) async {
+  final delivererRepository = getIt<DelivererRepository>();
+  List<Deliverer> deliverers =
+      await delivererRepository.getDeliverersByWaterTypeAndIsOnline(waterType);
 
-    activeDeliveryProvider.initDeliverers(deliverers);
+  activeDeliveryProvider.initDeliverers(deliverers);
 
-    for (var deliverer in deliverers) {
-      final getGeolocation =
-          await getIt<GeolocationRepository>().getGeolocation(deliverer.userId);
-      if (getGeolocation != null) {
-        activeDeliveryProvider.updateGeolocation(getGeolocation);
-      }
+  // Create a copy of the list to avoid modification during iteration
+  List<Deliverer> deliverersCopy = List.from(deliverers);
+
+  for (var deliverer in deliverersCopy) {
+    final getGeolocation =
+        await getIt<GeolocationRepository>().getGeolocation(deliverer.userId);
+    if (getGeolocation != null) {
+      activeDeliveryProvider.updateGeolocation(getGeolocation);
     }
-
-    appWriteService.subscribeToRealtimeForDeliverersUpdates(
-      waterType: waterType,
-      onUpdate: (Deliverer updatedDelivererData) {
-        activeDeliveryProvider.updateDeliverer(updatedDelivererData);
-      },
-    );
   }
+
+  appWriteService.subscribeToRealtimeForDeliverersUpdates(
+    waterType: waterType,
+    onUpdate: (Deliverer updatedDelivererData) {
+      activeDeliveryProvider.updateDeliverer(updatedDelivererData);
+    },
+  );
+}

@@ -114,11 +114,14 @@ class _RegistrationPageState extends State<RegistrationPage> {
 
   void _startTimer() {
     _timer = Timer(const Duration(seconds: 20), () {
-      if (smsIsRequest) {
+      if (mounted) {
+if (smsIsRequest) {
         setState(() {
           _showGoogleRegisterButton = true;
         });
       }
+      }
+      
     });
   }
 

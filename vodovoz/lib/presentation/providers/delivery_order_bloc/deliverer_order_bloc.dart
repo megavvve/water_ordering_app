@@ -10,6 +10,7 @@ import 'package:vodovoz/domain/repositories/user/rating_repository.dart';
 import 'package:vodovoz/domain/usecases/get_user_by_id.dart';
 import 'package:vodovoz/injection_container.dart';
 import 'package:vodovoz/presentation/widgets/enums/order_status.dart';
+import 'package:vodovoz/utils/constants.dart';
 
 part 'deliverer_order_event.dart';
 part 'deliverer_order_state.dart';
@@ -27,6 +28,7 @@ class DelivererOrderBloc
     on<AcceptPendingOrder>(_onAcceptPendingOrder);
     on<UpdateCurrentOrder>(_onUpdateCurrentOrder);
     on<CompleteOrder>(_onCompleteOrder);
+    on<RejectPendingOrder>(_onRejectPendingOrder);
   }
 
   Future<void> _onLoadOrders(
@@ -55,7 +57,7 @@ class DelivererOrderBloc
         emit(OrderAlreadyAccepted(acceptedOrder));
         return;
       }
-      print(getIt<LocalSavedData>().getDelivererWaterType());
+
       final filteredOrders = orders
           .where((order) =>
               (order.status == OrderStatus.pending.name ||
@@ -70,7 +72,11 @@ class DelivererOrderBloc
 
       emit(OrderLoaded(filteredOrders));
     } catch (e) {
-      emit(OrderError('Failed to load orders: $e'));
+      emit(
+        OrderError(
+          'Failed to load orders: $e',
+        ),
+      );
     }
   }
 
@@ -101,18 +107,58 @@ class DelivererOrderBloc
       final userModelForNotification =
           await getIt<GetUserById>().call(order.customerId);
       await getIt<NotificationRepository>().sendNotificationtoOtherUser(
-        notificationTitle: 'Заказ принят',
-        notificationBody: 'Клиент принял вашу заявку на доставку.',
+        notificationTitle: textForNotificationTitleFromDeliverer,
+        notificationBody:
+            '$textForNotificationTitleFromDeliverer под номером ${order.id.hashCode}. Зайдите в приложение для подробной информации',
         deviceToken: userModelForNotification?.token ?? '',
       );
       if (state is OrderLoaded) {
         List<Order> ordersList = state.orders;
         ordersList.remove(copyOrder);
         ordersList.add(order);
-        emit(OrderLoaded(ordersList));
+        emit(
+          OrderLoaded(
+            ordersList,
+          ),
+        );
       }
     } catch (e) {
-      emit(OrderError('Failed to accept order: $e'));
+      emit(
+        OrderError(
+          'Failed to accept order: $e',
+        ),
+      );
+    }
+  }
+
+  Future<void> _onRejectPendingOrder(
+      RejectPendingOrder event, Emitter<DelivererOrderState> emit) async {
+    final order = event.order;
+
+    final state = this.state;
+    try {
+      final userId = getIt<LocalSavedData>().getUserId();
+      final copyOrder = order;
+      order.idsOfPossibleDeliverers.remove(userId);
+      order.idsOfNotPossibleDeliverers.add(userId);
+
+      await getIt<OrderRepository>().updateOrder(order);
+      if (state is OrderLoaded) {
+        List<Order> ordersList = state.orders;
+        ordersList.remove(copyOrder);
+
+        emit(
+          OrderLoaded(
+            ordersList,
+          ),
+        );
+      }
+    } catch (e) {
+      emit(
+        OrderError(
+          'Failed to accept order: $e',
+        ),
+      );
     }
   }
 

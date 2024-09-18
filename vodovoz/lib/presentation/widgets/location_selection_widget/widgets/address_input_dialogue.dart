@@ -64,12 +64,14 @@ class _AddressInputDialogState extends State<AddressInputDialog> {
     final List<String>? suggestions = (widget.isProfile)
         ? await geoService.searchCities(query)
         : await geoService.searchAddresses(query, currentGeolocation);
+     if (mounted) {
     setState(() {
       _suggestions.clear();
       if (suggestions != null) {
         _suggestions.addAll(suggestions);
       }
     });
+  }
   }
 
   void _selectAddress(String address) async {

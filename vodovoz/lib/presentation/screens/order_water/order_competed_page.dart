@@ -88,7 +88,7 @@ class _OrderCompletedPageState extends State<OrderCompletedPage> {
                           style: const TextStyle(color: Colors.white),
                         ),
                         Text(
-                          'Количество воды: ${widget.order?.quantity}',
+                          'Количество воды: ${widget.order?.quantity} ${widget.order!.isLitre! ? 'л' : 'шт'}',
                           style: const TextStyle(color: Colors.white),
                         ),
                         Text(

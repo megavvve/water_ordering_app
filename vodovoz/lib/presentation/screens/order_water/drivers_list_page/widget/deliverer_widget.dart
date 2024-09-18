@@ -160,19 +160,24 @@ class _DelivererWidgetState extends State<DelivererWidget> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    FilledButton(
-                      onPressed: () {
-                        widget.onAccept(deliverer!);
-                      },
-                      style: btnStlGreen,
-                      child: const Text('Принять'),
+                    Expanded(
+                      child: FilledButton(
+                        onPressed: () {
+                          widget.onAccept(deliverer!);
+                        },
+                        style: btnStlGreen,
+                        
+                        child: const Text('Принять'),
+                      ),
                     ),
-                    FilledButton(
-                      onPressed: () {
-                        widget.onReject(deliverer!);
-                      },
-                      style: btnStlGrey,
-                      child: const Text('Отклонить'),
+                    Expanded(
+                      child: FilledButton(
+                        onPressed: () {
+                          widget.onReject(deliverer!);
+                        },
+                        style: btnStlGrey,
+                        child: const Text('Отклонить'),
+                      ),
                     ),
                   ],
                 ),

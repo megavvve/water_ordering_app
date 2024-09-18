@@ -37,6 +37,16 @@ class AcceptPendingOrder extends DelivererOrderEvent {
   List<Object> get props => [order];
 }
 
+class RejectPendingOrder extends DelivererOrderEvent {
+  final Order order;
+
+
+  const RejectPendingOrder(this.order,);
+
+  @override
+  List<Object> get props => [order];
+}
+
 class UpdateOrderStatus extends DelivererOrderEvent {
   final Order order;
   final String status;

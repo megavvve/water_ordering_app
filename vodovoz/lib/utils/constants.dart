@@ -32,3 +32,5 @@ const String reviewsCollectionId = "66c34601002a97c33d0a";
 //const String apiKeyForYandexMaps = 'da924512-acde-4a48-8b66-0a5b1f07a18c';
 const String apiKeyForYandexMaps = '106e9257-04f5-403b-a516-90224792f022';
 const String yandexGeosuggestAPIKey = '9a3ef726-3885-4b6e-a42d-24accf724cf2';
+
+const String textForNotificationTitleFromDeliverer = 'Доставщик готов выполнить ваш заказ';

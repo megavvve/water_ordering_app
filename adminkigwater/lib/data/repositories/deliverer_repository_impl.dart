@@ -73,6 +73,9 @@ class DelivererRepositoryImpl implements DelivererRepository {
       final response = await database.listDocuments(
         databaseId: dbId,
         collectionId: deliverersCollectionId,
+          queries: [
+          Query.limit(5000),
+        ]
       );
 
       return response.documents

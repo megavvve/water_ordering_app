@@ -6,20 +6,22 @@ class UserModel {
   String name;
   String phoneNumber;
   String? fileId;
-  String city;
+  String? geolocationId;
   String userType; // 'user', 'deliverer', 'advertiser', 'admin'
   String? ratingId;
   String? token;
+  String? email;
   bool? isOnline;
   UserModel({
     required this.userId,
     required this.name,
     required this.phoneNumber,
     required this.fileId,
-    required this.city,
+    required this.geolocationId,
     required this.userType,
     required this.ratingId,
     this.token,
+    this.email,
     this.isOnline,
   });
 
@@ -28,10 +30,11 @@ class UserModel {
     String? name,
     String? phoneNumber,
     String? fileId,
-    String? city,
+    String? geolocationId,
     String? userType,
     String? ratingId,
     String? token,
+    String? email,
     bool? isOnline,
   }) {
     return UserModel(
@@ -39,10 +42,11 @@ class UserModel {
       name: name ?? this.name,
       phoneNumber: phoneNumber ?? this.phoneNumber,
       fileId: fileId ?? this.fileId,
-      city: city ?? this.city,
+      geolocationId: geolocationId ?? this.geolocationId,
       userType: userType ?? this.userType,
       ratingId: ratingId ?? this.ratingId,
       token: token ?? this.token,
+      email: email ?? this.email,
       isOnline: isOnline ?? this.isOnline,
     );
   }
@@ -53,10 +57,11 @@ class UserModel {
       'name': name,
       'phoneNumber': phoneNumber,
       'fileId': fileId,
-      'city': city,
+      'geolocationId': geolocationId,
       'userType': userType,
       'ratingId': ratingId,
       'token': token,
+      'email': email,
       'isOnline': isOnline,
     };
   }
@@ -67,10 +72,12 @@ class UserModel {
       name: map['name'] as String,
       phoneNumber: map['phoneNumber'] as String,
       fileId: map['fileId'] != null ? map['fileId'] as String : null,
-      city: map['city'] as String,
+      geolocationId:
+          map['geolocationId'] != null ? map['geolocationId'] as String : null,
       userType: map['userType'] as String,
       ratingId: map['ratingId'] != null ? map['ratingId'] as String : null,
       token: map['token'] != null ? map['token'] as String : null,
+      email: map['email'] != null ? map['email'] as String : null,
       isOnline: map['isOnline'] != null ? map['isOnline'] as bool : null,
     );
   }
@@ -82,7 +89,7 @@ class UserModel {
 
   @override
   String toString() {
-    return 'UserModel(userId: $userId, name: $name, phoneNumber: $phoneNumber, fileId: $fileId, city: $city, userType: $userType, ratingId: $ratingId, token: $token, isOnline: $isOnline)';
+    return 'UserModel(userId: $userId, name: $name, phoneNumber: $phoneNumber, fileId: $fileId, geolocationId: $geolocationId, userType: $userType, ratingId: $ratingId, token: $token, email: $email, isOnline: $isOnline)';
   }
 
   @override
@@ -93,10 +100,11 @@ class UserModel {
         other.name == name &&
         other.phoneNumber == phoneNumber &&
         other.fileId == fileId &&
-        other.city == city &&
+        other.geolocationId == geolocationId &&
         other.userType == userType &&
         other.ratingId == ratingId &&
         other.token == token &&
+        other.email == email &&
         other.isOnline == isOnline;
   }
 
@@ -106,10 +114,11 @@ class UserModel {
         name.hashCode ^
         phoneNumber.hashCode ^
         fileId.hashCode ^
-        city.hashCode ^
+        geolocationId.hashCode ^
         userType.hashCode ^
         ratingId.hashCode ^
         token.hashCode ^
+        email.hashCode ^
         isOnline.hashCode;
   }
 }

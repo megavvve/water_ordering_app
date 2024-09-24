@@ -2,50 +2,65 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class UserListHeader extends StatelessWidget {
-  const UserListHeader({Key? key}) : super(key: key);
+  const UserListHeader({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Card(
       child: Row(
         children: [
-          Padding(
-            padding: EdgeInsets.all(3.sp),
-            child: OutlinedButton(
-              onPressed: () {},
-              child: Text(
-                '№',
-                style: TextStyle(
-                  fontSize: 18.sp,
+          Expanded(
+            flex: 1,
+            child: Padding(
+              padding: EdgeInsets.all(3.sp),
+              child: OutlinedButton(
+                onPressed: () {},
+                child: Text(
+                  '№',
+                  style: TextStyle(
+                    fontSize: 18.sp,
+                  ),
                 ),
               ),
             ),
           ),
-          Padding(
-            padding: EdgeInsets.all(3.sp),
-            child: SizedBox(
-              width: 150.w,
+          Expanded(
+            flex: 3,
+            child: Padding(
+              padding: EdgeInsets.all(3.sp),
               child: OutlinedButton(
                 onPressed: () {},
-                child: Text('ФИО', style: TextStyle(fontSize: 18.sp)),
+                child: Text(
+                  'ФИО',
+                  style: TextStyle(fontSize: 18.sp),
+                ),
               ),
             ),
           ),
-          Padding(
-            padding: EdgeInsets.all(3.sp),
-            child: SizedBox(
-              width: 150.w,
+          Expanded(
+            flex: 3,
+            child: Padding(
+              padding: EdgeInsets.all(3.sp),
               child: OutlinedButton(
                 onPressed: () {},
-                child: Text('Телефон', style: TextStyle(fontSize: 18.sp)),
+                child: Text(
+                  'Телефон',
+                  style: TextStyle(fontSize: 18.sp),
+                ),
               ),
             ),
           ),
-          Padding(
-            padding: EdgeInsets.all(3.sp),
-            child: OutlinedButton(
-              onPressed: () {},
-              child: Text('Регион', style: TextStyle(fontSize: 18.sp)),
+          Expanded(
+            flex: 4,
+            child: Padding(
+              padding: EdgeInsets.all(3.sp),
+              child: OutlinedButton(
+                onPressed: () {},
+                child: Text(
+                  'Регион',
+                  style: TextStyle(fontSize: 18.sp),
+                ),
+              ),
             ),
           ),
         ],

@@ -8,7 +8,6 @@ class AppWrite {
       .setEndpoint('https://cloud.appwrite.io/v1')
       .setProject('6696b90100392dbab5c0')
       .setSelfSigned(status: true);
-
   Databases getDataBase() {
     Databases databases = Databases(appWriteClient);
     return databases;

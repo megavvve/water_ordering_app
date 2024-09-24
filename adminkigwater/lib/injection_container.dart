@@ -1,7 +1,10 @@
 import 'package:adminkigwater/data/datasources/local/excel_servise.dart';
+import 'package:adminkigwater/data/datasources/local/local_saved_data.dart';
 import 'package:adminkigwater/data/datasources/remote/appwrite.dart';
 import 'package:adminkigwater/data/repositories/admin_repository_impl.dart';
+import 'package:adminkigwater/data/repositories/geolocation_repository_impl.dart';
 import 'package:adminkigwater/domain/repositories/admin_repository.dart';
+import 'package:adminkigwater/domain/repositories/geolocation_repository.dart';
 import 'package:adminkigwater/domain/usecases/add_order_use_case.dart';
 import 'package:adminkigwater/domain/usecases/get_admins_use_case.dart';
 import 'package:adminkigwater/domain/usecases/get_deliverer_by_id.dart';
@@ -29,20 +32,29 @@ import 'package:adminkigwater/domain/repositories/storage_repository.dart';
 import 'package:adminkigwater/domain/repositories/user_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-final getIt = GetIt.instance;
+final GetIt getIt = GetIt.instance;
 
 Future<void> setupLocator() async {
-  //Servieces
+
+
+  //Services
   getIt.registerLazySingleton<AppWrite>(() => AppWrite());
 
   final sharedPreferences = await SharedPreferences.getInstance();
   getIt.registerSingleton<SharedPreferences>(sharedPreferences);
+  //getIt<SharedPreferences>().clear();
+  //getIt.registerLazySingleton<GeoService>(() => GeoService());
   getIt.registerLazySingleton<ExcelService>(() => ExcelService());
+  getIt.registerLazySingleton<LocalSavedData>(() => LocalSavedData());
+  // await PushNotifications.init();
 
-  // Register Cubit
-  // getIt.registerFactory(() => PhoneNumberSignInCubit());
-//Repositoty
+  // await PushNotifications.localNotiInit();
+
+  // FirebaseMessaging.onBackgroundMessage(_firebaseBackgroundMessage);
+
+//Repositories
   getIt.registerLazySingleton<UserRepository>(() => UserRepositoryImpl());
+  getIt.registerLazySingleton<AdminRepository>(() => AdminRepositoryImpl());
   getIt.registerLazySingleton<OrderRepository>(() => OrderRepositoryImpl());
   getIt.registerLazySingleton<DelivererRepository>(
       () => DelivererRepositoryImpl());
@@ -51,7 +63,8 @@ Future<void> setupLocator() async {
   getIt.registerLazySingleton<NotificationRepository>(
       () => NotificationRepositoryImpl());
   getIt.registerLazySingleton<RatingRepository>(() => RatingRepositoryImpl());
-  getIt.registerLazySingleton<AdminRepository>(() => AdminRepositoryImpl());
+  getIt.registerLazySingleton<GeolocationRepository>(
+      () => GeolocationRepositoryImpl());
   //use cases
   getIt.registerLazySingleton(
     () => GetUserById(
@@ -68,11 +81,7 @@ Future<void> setupLocator() async {
       orderRepository: getIt(),
     ),
   );
-  getIt.registerLazySingleton(
-    () => GetAdmins(
-      adminRepository: getIt(),
-    ),
-  );
+
   getIt.registerLazySingleton(
     () => GetUsers(
       userRepository: getIt(),
@@ -89,13 +98,27 @@ Future<void> setupLocator() async {
     ),
   );
   getIt.registerLazySingleton(
-    () => UpdateDeliverer(
-      delivererRepository: getIt(),
+    () => GetAdmins(
+      adminRepository: getIt(),
     ),
   );
-  getIt.registerLazySingleton(
+   getIt.registerLazySingleton(
     () => UpdateAdmin(
       adminRepository: getIt(),
     ),
   );
+  getIt.registerLazySingleton(
+    () => UpdateDeliverer(
+      delivererRepository: getIt(),
+    ),
+  );
+ 
+ 
+ 
 }
+
+// Future _firebaseBackgroundMessage(RemoteMessage message) async {
+//   if (message.notification != null) {
+//     print("Some notification Received in background...");
+//   }
+// }

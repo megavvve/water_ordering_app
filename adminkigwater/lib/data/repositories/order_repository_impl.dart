@@ -37,9 +37,11 @@ class OrderRepositoryImpl implements OrderRepository {
   @override
   Future<List<Order>> getOrders() async {
     final response = await database.listDocuments(
-      databaseId: dbId,
-      collectionId: ordersCollectionId,
-    );
+        databaseId: dbId,
+        collectionId: ordersCollectionId,
+        queries: [
+          Query.limit(5000),
+        ]);
     List<Order> ordersCollectionIdList = [];
     for (Document element in response.documents) {
       final order = Order.fromMap(element.data);

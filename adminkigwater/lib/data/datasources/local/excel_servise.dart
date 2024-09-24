@@ -1,7 +1,9 @@
+import 'package:adminkigwater/domain/entities/admin.dart';
 import 'package:adminkigwater/domain/entities/deliverer.dart';
+import 'package:adminkigwater/domain/entities/geolocation.dart';
 import 'package:adminkigwater/domain/entities/order.dart';
 import 'package:adminkigwater/domain/entities/user_model.dart';
-import 'package:adminkigwater/domain/usecases/get_user_by_id.dart';
+import 'package:adminkigwater/domain/repositories/geolocation_repository.dart';
 import 'package:adminkigwater/injection_container.dart';
 import 'package:excel/excel.dart';
 import 'package:file_picker/file_picker.dart';
@@ -14,14 +16,14 @@ class ExcelService {
     Sheet sheet = excel['Sheet1'];
 
     // Заголовки
-    sheet.appendRow([const TextCellValue('Отчёт по заказам')]);
+    sheet.appendRow([TextCellValue('Отчёт по заказам')]);
     sheet.appendRow([
-      const TextCellValue('ID заказа'),
-      const TextCellValue('ID клиента'),
-      const TextCellValue('ID исполнителя'),
-      const TextCellValue('Тип воды'),
-      const TextCellValue('Количество'),
-      const TextCellValue('Статус')
+      TextCellValue('ID заказа'),
+      TextCellValue('ID клиента'),
+      TextCellValue('ID исполнителя'),
+      TextCellValue('Тип воды'),
+      TextCellValue('Количество'),
+      TextCellValue('Статус')
     ]);
     // Данные заказов
     for (var order in orders) {
@@ -42,50 +44,94 @@ class ExcelService {
     var excel = Excel.createExcel();
     Sheet sheet = excel['Sheet1'];
 
-    // Заголовки
-    sheet.appendRow([const TextCellValue('Отчёт по пользователям')]);
+    // Заголовки таблицы
+    sheet.appendRow([TextCellValue('Отчёт по пользователям')]);
     sheet.appendRow([
-      const TextCellValue('ID пользователя'),
-      const TextCellValue('Имя'),
-      const TextCellValue('Номер телефона'),
-      const TextCellValue('ID файла'),
-      const TextCellValue('Город'),
-      const TextCellValue('Тип пользователя'),
-      const TextCellValue('ID рейтинга'),
-      const TextCellValue('Токен'),
-      const TextCellValue('Онлайн статус'),
+      TextCellValue('ID пользователя'),
+      TextCellValue('Имя'),
+      TextCellValue('Номер телефона'),
+      TextCellValue('ID файла'),
+      TextCellValue('Город'),
+      TextCellValue('Тип пользователя'),
+      TextCellValue('ID рейтинга'),
+      TextCellValue('Токен'),
+      // TextCellValue('Онлайн статус'),
     ]);
 
     // Данные пользователей
-    for (var user in users) {
+    for (UserModel user in users) {
+      // Получение геолокации пользователя
+      Geolocation? userGeo =
+          await getIt<GeolocationRepository>().getGeolocation(user.userId);
+
+      // Заполнение строки с учетом пустых полей
       sheet.appendRow([
         TextCellValue(user.userId),
-        TextCellValue(user.name),
-        TextCellValue(user.phoneNumber),
-        TextCellValue(user.fileId ?? 'N/A'),
-        TextCellValue(user.city),
-        TextCellValue(user.userType),
-        TextCellValue(user.ratingId ?? 'N/A'),
-        TextCellValue(user.token ?? 'N/A'),
+        TextCellValue(user.name.isNotEmpty ? user.name : 'не указано'),
         TextCellValue(
-            user.isOnline != null && user.isOnline! ? 'Онлайн' : 'Оффлайн'),
+            user.phoneNumber.isNotEmpty ? user.phoneNumber : 'не указано'),
+        TextCellValue(user.fileId ?? 'не указано'),
+        TextCellValue(userGeo?.address ?? 'не указано'),
+        TextCellValue(user.userType.isNotEmpty ? user.userType : 'не указано'),
+        TextCellValue(user.ratingId ?? 'не указано'),
+        TextCellValue(user.token ?? 'не указано'),
+          // TextCellValue(
+          //     user.isOnline != null && user.isOnline! ? 'Онлайн' : 'Оффлайн'),
       ]);
     }
 
+    // Сохранение Excel файла
     await _saveExcelFile(excel, 'Users_Report.xlsx');
+  }
+
+  Future<void> exportAdminsReport(List<Admin> admins) async {
+    var excel = Excel.createExcel();
+    Sheet sheet = excel['Sheet1'];
+
+    // Заголовки таблицы
+    sheet.appendRow([TextCellValue('Отчёт по администраторам')]);
+    sheet.appendRow([
+      TextCellValue('ID администратора'),
+      TextCellValue('Имя'),
+      TextCellValue('Логин'),
+      TextCellValue('Пароль'),
+      TextCellValue('Права на пользователей'),
+      TextCellValue('Права на гео'),
+      TextCellValue('Права на статистику'),
+      TextCellValue('Права на водителей'),
+      TextCellValue('Права на администраторов'),
+    ]);
+
+    // Данные администраторов
+    for (Admin admin in admins) {
+      sheet.appendRow([
+        TextCellValue(admin.id),
+        TextCellValue(admin.name.isNotEmpty ? admin.name : 'не указано'),
+        TextCellValue(admin.login),
+        TextCellValue(admin.password),
+        TextCellValue(admin.permissionForUsers ? 'Да' : 'Нет'),
+        TextCellValue(admin.permissionForGeo ? 'Да' : 'Нет'),
+        TextCellValue(admin.permissionForStats ? 'Да' : 'Нет'),
+        TextCellValue(admin.permissionForDrivers ? 'Да' : 'Нет'),
+        TextCellValue(admin.permissionForAdmins ? 'Да' : 'Нет'),
+      ]);
+    }
+
+    // Сохранение Excel файла
+    await _saveExcelFile(excel, 'Admins_Report.xlsx');
   }
 
   Future<void> exportClientsReport(
       List<Map<String, dynamic>> clientsData) async {
     var excel = Excel.createExcel();
-    Sheet sheet = excel['Отчёт по клиентам'];
+    Sheet sheet = excel['Sheet1'];
 
     // Заголовки
-    sheet.appendRow([const TextCellValue('Отчёт по клиентам')]);
+    sheet.appendRow([TextCellValue('Отчёт по клиентам')]);
     sheet.appendRow([
-      const TextCellValue('ID клиента'),
-      const TextCellValue('Имя'),
-      const TextCellValue('Телефон')
+      TextCellValue('ID клиента'),
+      TextCellValue('Имя'),
+      TextCellValue('Телефон')
     ]);
 
     // Данные клиентов
@@ -103,12 +149,11 @@ class ExcelService {
   Future<void> exportWaterTypesReport(
       List<Map<String, dynamic>> waterTypesData) async {
     var excel = Excel.createExcel();
-    Sheet sheet = excel['Отчёт по типам воды'];
+    Sheet sheet = excel['Sheet1'];
 
     // Заголовки
-    sheet.appendRow([const TextCellValue('Отчёт по типам воды')]);
-    sheet.appendRow(
-        [const TextCellValue('Тип воды'), const TextCellValue('Количество')]);
+    sheet.appendRow([TextCellValue('Отчёт по типам воды')]);
+    sheet.appendRow([TextCellValue('Тип воды'), TextCellValue('Количество')]);
 
     // Данные типов воды
     for (var waterType in waterTypesData) {
@@ -121,6 +166,47 @@ class ExcelService {
     await _saveExcelFile(excel, 'Water_Types_Report.xlsx');
   }
 
+  Future<void> exportGeolocationStatistics(
+      Map<String, Map<String, Map<String, int>>> stats) async {
+    var excel = Excel.createExcel();
+    Sheet sheet = excel['Sheet1'];
+
+    // Заголовки таблицы
+    sheet.appendRow([TextCellValue('Отчёт по геоактивности')]);
+    sheet.appendRow([
+      TextCellValue('Страна'),
+      TextCellValue('Регион'),
+      TextCellValue('Город'),
+      TextCellValue('Количество заказов')
+    ]);
+
+    // Заполнение данными
+    for (var countryEntry in stats.entries) {
+      String country = countryEntry.key;
+      Map<String, Map<String, int>> regions = countryEntry.value;
+
+      for (var regionEntry in regions.entries) {
+        String region = regionEntry.key;
+        Map<String, int> localities = regionEntry.value;
+
+        for (var localityEntry in localities.entries) {
+          String locality = localityEntry.key;
+          int orderCount = localityEntry.value;
+
+          sheet.appendRow([
+            TextCellValue(country),
+            TextCellValue(region),
+            TextCellValue(locality),
+            TextCellValue(orderCount.toString())
+          ]);
+        }
+      }
+    }
+
+    // Сохранение Excel файла
+    await _saveExcelFile(excel, 'Geolocation_Statistics_Report.xlsx');
+  }
+
   Future<void> _saveExcelFile(Excel excel, String fileName) async {
     excel.save(fileName: fileName);
   }
@@ -128,31 +214,33 @@ class ExcelService {
   //statistics
   Future<void> exportOrdersByLocationReport(List<Order> orders) async {
     var excel = Excel.createExcel();
-    Sheet sheet = excel['Orders_By_Location'];
+    Sheet sheet = excel['Sheet1'];
 
     // Заголовки
-    sheet.appendRow([const TextCellValue('Отчёт по заказам (по локации)')]);
+    sheet.appendRow([TextCellValue('Отчёт по заказам (по локации)')]);
     sheet.appendRow([
-      const TextCellValue('ID заказа'),
-      const TextCellValue('ID клиента'),
-      const TextCellValue('ID поставщика'),
-      const TextCellValue('Тип воды'),
-      const TextCellValue('Количество'),
-      const TextCellValue('Адрес'),
-      const TextCellValue('Метод оплаты'),
-      const TextCellValue('Статус'),
-      const TextCellValue('Дата создания'),
+      TextCellValue('ID заказа'),
+      TextCellValue('ID клиента'),
+      TextCellValue('ID поставщика'),
+      TextCellValue('Тип воды'),
+      TextCellValue('Количество'),
+      TextCellValue('Адрес'),
+      TextCellValue('Метод оплаты'),
+      TextCellValue('Статус'),
+      TextCellValue('Дата создания'),
     ]);
 
     // Данные по заказам
     for (var order in orders) {
+      Geolocation? orderGeo =
+          await getIt<GeolocationRepository>().getGeolocation(order.id);
       sheet.appendRow([
         TextCellValue(order.id),
         TextCellValue(order.customerId),
         TextCellValue(order.delivererId),
         TextCellValue(order.waterType),
         TextCellValue(order.quantity.toString()),
-        TextCellValue(order.address),
+        TextCellValue(orderGeo?.address ?? 'N/A'),
         TextCellValue(order.paymentMethod),
         TextCellValue(order.status),
         TextCellValue(order.createdAt.toString()),
@@ -164,15 +252,15 @@ class ExcelService {
 
   Future<void> exportOrdersByClientsReport(List<Order> orders) async {
     var excel = Excel.createExcel();
-    Sheet sheet = excel['Orders_By_Clients'];
+    Sheet sheet = excel['Sheet1'];
 
     // Заголовки
-    sheet.appendRow([const TextCellValue('Отчёт по заказам (по клиентам)')]);
+    sheet.appendRow([TextCellValue('Отчёт по заказам (по клиентам)')]);
     sheet.appendRow([
-      const TextCellValue('ID заказа'),
-      const TextCellValue('ID клиента'),
-      const TextCellValue('Количество заказов'),
-      const TextCellValue('Общая сумма'),
+      TextCellValue('ID заказа'),
+      TextCellValue('ID клиента'),
+      TextCellValue('Количество заказов'),
+      TextCellValue('Общая сумма'),
     ]);
 
     // Группировка заказов по клиентам
@@ -197,22 +285,25 @@ class ExcelService {
 
   Future<void> exportUsersByLocationReport(List<UserModel> users) async {
     var excel = Excel.createExcel();
-    Sheet sheet = excel['Users_By_Location'];
+    Sheet sheet = excel['Sheet1'];
 
     // Заголовки
-    sheet.appendRow(
-        [const TextCellValue('Отчёт по пользователям (по локациям)')]);
+    sheet.appendRow([TextCellValue('Отчёт по пользователям (по локациям)')]);
     sheet.appendRow([
-      const TextCellValue('ID пользователя'),
-      const TextCellValue('Имя'),
-      const TextCellValue('Номер телефона'),
-      const TextCellValue('Город'),
+      TextCellValue('ID пользователя'),
+      TextCellValue('Имя'),
+      TextCellValue('Номер телефона'),
+      TextCellValue('Город'),
     ]);
 
     // Группировка пользователей по локациям
     var usersByLocation = <String, List<UserModel>>{};
     for (var user in users) {
-      usersByLocation.putIfAbsent(user.city, () => []).add(user);
+      Geolocation? userGeo =
+          await getIt<GeolocationRepository>().getGeolocation(user.userId);
+      usersByLocation
+          .putIfAbsent(userGeo?.address ?? 'N/A', () => [])
+          .add(user);
     }
 
     // Данные по локациям
@@ -232,24 +323,26 @@ class ExcelService {
 
   Future<void> exportNewUsersReport(List<UserModel> users) async {
     var excel = Excel.createExcel();
-    Sheet sheet = excel['New_Users'];
+    Sheet sheet = excel['Sheet1'];
 
     // Заголовки
-    sheet.appendRow([const TextCellValue('Отчёт по новым пользователям')]);
+    sheet.appendRow([TextCellValue('Отчёт по новым пользователям')]);
     sheet.appendRow([
-      const TextCellValue('ID пользователя'),
-      const TextCellValue('Имя'),
-      const TextCellValue('Номер телефона'),
-      const TextCellValue('Дата регистрации'),
+      TextCellValue('ID пользователя'),
+      TextCellValue('Имя'),
+      TextCellValue('Номер телефона'),
+      TextCellValue('Дата регистрации'),
     ]);
 
     // Данные по новым пользователям
     for (var user in users.sublist(0, users.length > 5 ? 5 : users.length)) {
+      Geolocation? userGeo =
+          await getIt<GeolocationRepository>().getGeolocation(user.userId);
       sheet.appendRow([
         TextCellValue(user.userId),
         TextCellValue(user.name),
         TextCellValue(user.phoneNumber),
-        TextCellValue(user.city),
+        TextCellValue(userGeo?.address ?? 'N/A'),
       ]);
     }
 
@@ -258,47 +351,61 @@ class ExcelService {
 
   Future<void> exportDriverApplicationsReport(List<Deliverer> drivers) async {
     var excel = Excel.createExcel();
-    Sheet sheet = excel['Driver_Applications'];
+    Sheet sheet = excel['Sheet1'];
 
-    // Заголовки
-    sheet.appendRow([const TextCellValue('Отчёт по заявкам водителей')]);
+    // Заголовки таблицы
+    sheet.appendRow([TextCellValue('Отчёт по заявкам водовозов')]);
     sheet.appendRow([
-      const TextCellValue('ID пользователя'),
-      const TextCellValue('Имя'),
-      const TextCellValue('Номер телефона'),
-      const TextCellValue('Статус заявки'),
+      TextCellValue('ID водовоза'),
+      TextCellValue('Регистрационный сертификат'),
+      TextCellValue('Лицензия'),
+      TextCellValue('Вместимость (л)'),
+      TextCellValue('Тип воды'),
+      TextCellValue('Статус доступности'),
     ]);
 
-    // Данные по заявкам водителей
+    // Данные по водовозам
     for (Deliverer driver in drivers) {
-      final user = await getIt<GetUserById>().call(driver.userId);
+      // Заполнение строки с учетом пустых полей
       sheet.appendRow([
         TextCellValue(driver.userId),
-        TextCellValue(user!.name),
-        TextCellValue(user.phoneNumber),
-        TextCellValue(driver.isAvailable.toString()),
+        TextCellValue(
+            driver.regCert.isNotEmpty ? driver.regCert : 'не указано'),
+        TextCellValue(
+            driver.license.isNotEmpty ? driver.license : 'не указано'),
+        TextCellValue(
+            driver.capacity.isNotEmpty ? driver.capacity : 'не указано'),
+        TextCellValue(
+            driver.waterType.isNotEmpty ? driver.waterType : 'не указано'),
+        TextCellValue(driver.isAvailable != null && driver.isAvailable!
+            ? 'Доступен'
+            : 'Недоступен'),
       ]);
     }
 
+    // Сохранение Excel файла
     await _saveExcelFile(excel, 'Driver_Applications_Report.xlsx');
   }
 
   Future<void> exportActiveOrdersByRegionsReport(List<Order> orders) async {
     var excel = Excel.createExcel();
-    Sheet sheet = excel['Active_Orders_By_Regions'];
+    Sheet sheet = excel['Sheet1'];
 
     // Заголовки
     sheet.appendRow(
-        [const TextCellValue('Статистика по активным заказам и регионам')]);
+        [TextCellValue('Статистика по активным заказам и регионам')]);
     sheet.appendRow([
-      const TextCellValue('Регион'),
-      const TextCellValue('Количество активных заказов'),
+      TextCellValue('Регион'),
+      TextCellValue('Количество активных заказов'),
     ]);
 
     // Группировка активных заказов по регионам
     var activeOrdersByRegion = <String, int>{};
     for (var order in orders.where((order) => order.status == 'active')) {
-      activeOrdersByRegion.update(order.address, (count) => count + 1,
+      Geolocation? orderGeo =
+          await getIt<GeolocationRepository>().getGeolocation(order.id);
+      activeOrdersByRegion.update(
+          orderGeo?.address ?? 'N/A', (count) => count + 1,
           ifAbsent: () => 1);
     }
 
@@ -315,15 +422,15 @@ class ExcelService {
 
   Future<void> exportOrdersBySuppliersReport(List<Order> orders) async {
     var excel = Excel.createExcel();
-    Sheet sheet = excel['Orders_By_Suppliers'];
+    Sheet sheet = excel['Sheet1'];
 
     // Заголовки
-    sheet.appendRow([const TextCellValue('Отчёт по заказам (по поставщикам)')]);
+    sheet.appendRow([TextCellValue('Отчёт по заказам (по поставщикам)')]);
     sheet.appendRow([
-      const TextCellValue('ID заказа'),
-      const TextCellValue('ID поставщика'),
-      const TextCellValue('Количество заказов'),
-      const TextCellValue('Общая сумма'),
+      TextCellValue('ID заказа'),
+      TextCellValue('ID поставщика'),
+      TextCellValue('Количество заказов'),
+      TextCellValue('Общая сумма'),
     ]);
 
     // Группировка заказов по поставщикам

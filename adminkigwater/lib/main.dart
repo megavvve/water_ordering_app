@@ -3,17 +3,17 @@ import 'package:adminkigwater/injection_container.dart';
 import 'package:adminkigwater/presenation/screens/admins_page/admins_page.dart';
 import 'package:adminkigwater/presenation/screens/auth_page.dart';
 import 'package:adminkigwater/presenation/screens/driver_request/driver_request.dart';
-import 'package:adminkigwater/presenation/screens/geo_add_page.dart';
+import 'package:adminkigwater/presenation/screens/geo_activity_page/geo_activity_page.dart';
 import 'package:adminkigwater/presenation/screens/statistics_page/statistics_page.dart';
 import 'package:adminkigwater/presenation/screens/user_page/user_page.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart'; // Убедитесь, что вы добавили appwrite package в pubspec.yaml
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 Future<void> main() async {
-  //await AppWrite().getAccount().deleteSession(sessionId: 'current');
   setupLocator();
   bool isAuthenticated;
   try {
+    //await AppWrite().getAccount().deleteSession(sessionId: 'current');
     await AppWrite().getAccount().get();
     isAuthenticated = true;
   } catch (err) {
@@ -41,12 +41,12 @@ class MyApp extends StatelessWidget {
         builder: (context, snapshot) {
           return MaterialApp(
             routes: {
-              'geo': (context) => const GeoAddPage(),
+              'geo': (context) => const GeoActivityPage(),
               'users': (context) => const UsersPage(),
               'stats': (context) => const StatisticsPage(),
               'driverReq': (context) => const DriverRequestsPage(),
               'admins': (context) => const AdminsPage(),
-              'login': (context) => AuthPage(),
+              'login': (context) => const AuthPage(),
             },
             initialRoute: initialRoute,
             title: 'KigWater',
@@ -54,7 +54,7 @@ class MyApp extends StatelessWidget {
               colorScheme: ColorScheme.fromSeed(seedColor: Colors.cyan),
               useMaterial3: false,
             ),
-            home: AuthPage(),
+            home: const AuthPage(),
           );
         });
   }

@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class AuthPage extends StatefulWidget {
-  AuthPage({super.key});
+  const AuthPage({super.key});
 
   @override
   State<AuthPage> createState() => _AuthPageState();

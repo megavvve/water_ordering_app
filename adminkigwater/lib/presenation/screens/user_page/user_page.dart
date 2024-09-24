@@ -1,6 +1,8 @@
 import 'package:adminkigwater/data/datasources/local/excel_servise.dart';
+import 'package:adminkigwater/domain/entities/geolocation.dart';
 import 'package:adminkigwater/domain/entities/user_model.dart';
 import 'package:adminkigwater/domain/repositories/auth_repository.dart';
+import 'package:adminkigwater/domain/repositories/geolocation_repository.dart';
 import 'package:adminkigwater/domain/usecases/get_users_use_case.dart';
 import 'package:adminkigwater/domain/usecases/update_user_use_case.dart';
 import 'package:adminkigwater/injection_container.dart';
@@ -8,10 +10,9 @@ import 'package:adminkigwater/presenation/navigation/drawer.dart';
 import 'package:adminkigwater/presenation/screens/user_page/widgets/edit_user_dialog.dart';
 import 'package:adminkigwater/presenation/screens/user_page/widgets/user_list_header.dart';
 import 'package:adminkigwater/presenation/screens/user_page/widgets/user_list_widget.dart';
-import 'package:adminkigwater/presenation/screens/user_page/widgets/user_search_bar.dart';
 import 'package:adminkigwater/presenation/widgets/export_button.dart';
+import 'package:adminkigwater/presenation/widgets/search_bar.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class UsersPage extends StatefulWidget {
@@ -22,8 +23,10 @@ class UsersPage extends StatefulWidget {
 }
 
 class _UsersPageState extends State<UsersPage> {
-  Future<List<UserModel>>? _usersFuture;
   List<UserModel> _allUsers = [];
+  List<Geolocation> allGeolocations = [];
+  List<UserModel> _filteredUsers = [];
+  List<Geolocation?> _filteredGeolocations = [];
   String _searchQuery = "";
   final AuthRepository authRepository = getIt<AuthRepository>();
 
@@ -34,22 +37,31 @@ class _UsersPageState extends State<UsersPage> {
   }
 
   Future<void> _fetchUsers() async {
-    final users = await getIt<GetUsers>().call();
-    setState(() {
-      _allUsers = users;
-      _usersFuture = Future.value(_allUsers);
-    });
+    try {
+      final users = await getIt<GetUsers>().call();
+      List<Geolocation> geolocations = await getIt<GeolocationRepository>()
+          .getGeolocationsByIds(users.map((x) => x.userId).toList());
+
+      setState(() {
+        _allUsers = users;
+        allGeolocations = geolocations;
+        _filteredUsers = users;
+        _filteredGeolocations = geolocations;
+      });
+    } catch (e) {
+      print('Error fetching users: $e');
+    }
   }
 
   void _onSearch(String query) {
     setState(() {
       _searchQuery = query.toLowerCase();
-      List<UserModel> filteredUsers = _allUsers.where((user) {
+
+      // Фильтруем пользователей и их геолокации
+      _filteredUsers = _allUsers.where((user) {
         return user.name.toLowerCase().contains(_searchQuery) ||
-            user.phoneNumber.contains(_searchQuery) ||
-            user.city.toLowerCase().contains(_searchQuery);
+            user.phoneNumber.contains(_searchQuery);
       }).toList();
-      _usersFuture = Future.value(filteredUsers);
     });
   }
 
@@ -70,7 +82,7 @@ class _UsersPageState extends State<UsersPage> {
         await authRepository.updateAuthPhone(
             updatedUser.userId, updatedUser.phoneNumber);
       }
-      await _fetchUsers(); // Refresh the user list after update
+      await _fetchUsers();
     }
   }
 
@@ -82,37 +94,41 @@ class _UsersPageState extends State<UsersPage> {
         title: const Text('Пользователи'),
         centerTitle: true,
       ),
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            SizedBox(
-              height: 15.h,
-            ),
-            ExportButton(
-              buttonText: 'Выгрузить статистику по всем пользователям',
-              onExport: () {
-                getIt<ExcelService>().exportUsersReport(_allUsers);
-              },
-            ),
-            Padding(
-              padding: EdgeInsets.all(15.sp),
-              child: SizedBox(
-                height: 50.h,
-                child: SearchWidget(onSearch: _onSearch),
-              ),
-            ),
-            const UserListHeader(),
-            Expanded(
-              child: UserListWidget(
-                usersFuture: _usersFuture,
-                onEditUser: _onEditUser,
-              ),
-            ),
-          ],
-        ),
+      body: Column(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          SizedBox(
+            height: 15.h,
+          ),
+          ExportButton(
+            buttonText: 'Выгрузить статистику по всем пользователям',
+            onExport: () {
+              getIt<ExcelService>().exportUsersReport(_allUsers);
+            },
+          ),
+          SearchWidget(onSearch: _onSearch),
+          Padding(
+            padding:  EdgeInsets.only(right: 295.w),
+            child: const UserListHeader(),
+          ),
+          Expanded(
+            child: _filteredUsers.isNotEmpty
+                ? UserListWidget(
+                    users: _filteredUsers,
+                    geolocations: _filteredGeolocations,
+                    onEditUser: _onEditUser,
+                  )
+                : (_allUsers.isNotEmpty
+                    ? const Center(
+                        child: Text('Пользователи не найдены'),
+                      )
+                    : const Center(
+                        child: CircularProgressIndicator(),
+                      )),
+          ),
+        ],
       ),
     );
   }

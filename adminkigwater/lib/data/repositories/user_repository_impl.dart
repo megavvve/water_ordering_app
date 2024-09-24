@@ -1,15 +1,18 @@
 import 'dart:io' as f;
 
-import 'package:appwrite/appwrite.dart';
-import 'package:appwrite/models.dart';
-import 'package:flutter/material.dart';
-import 'package:adminkigwater/data/datasources/remote/appwrite.dart';
 import 'package:adminkigwater/data/datasources/local/local_saved_data.dart';
+import 'package:adminkigwater/data/datasources/remote/appwrite.dart';
+import 'package:adminkigwater/domain/entities/geolocation.dart';
 import 'package:adminkigwater/domain/entities/user_model.dart';
-
+import 'package:adminkigwater/domain/repositories/geolocation_repository.dart';
+import 'package:adminkigwater/domain/repositories/storage_repository.dart';
 import 'package:adminkigwater/domain/repositories/user_repository.dart';
 import 'package:adminkigwater/injection_container.dart';
 import 'package:adminkigwater/utils/constants.dart';
+import 'package:appwrite/appwrite.dart';
+import 'package:appwrite/models.dart';
+import 'package:flutter/material.dart';
+
 
 class UserRepositoryImpl implements UserRepository {
   late Databases database;
@@ -64,60 +67,68 @@ class UserRepositoryImpl implements UserRepository {
   }
 
   @override
-  Future<void> saveProfileData(String fullName, String city, f.File? image,
-      BuildContext context, UserModel? user) async {
+  Future<void> saveProfileData(String? fullName, Geolocation? geolocation,
+      f.File? image, String? phone, BuildContext context) async {
     try {
-      Storage storage = AppWrite().getStorage();
       String? fileId;
 
-      final userId = LocalSavedData().getUserId();
+      // Обновление аватара
       if (image != null) {
-        final result = await storage.createFile(
-          bucketId: '6697bf930027e7399200',
-          fileId: ID.unique(),
-          file: InputFile.fromPath(
-              path: image.path, filename: '$userId-avatar.jpg'),
-        );
-        fileId = result.$id;
+        fileId = LocalSavedData().getUserId();
+        await getIt<StorageRepository>().uploadAvatar(fileId, image);
       }
+
+      // Обновление геолокации
+      if (geolocation?.address != null) {
+        await getIt<GeolocationRepository>().updateGeolocation(geolocation!);
+      }
+
+      // Получаем данные аккаунта
       Account account = AppWrite().getAccount();
-      if (user != null) {
-        updateUser(
-          user.copyWith(
-            name: fullName,
-            city: city,
-            fileId: fileId,
-          ),
+
+      // Если есть изменения, обновляем профиль пользователя
+      if (fullName != null || fileId != null || phone != null) {
+        UserModel? user = await getUserById(LocalSavedData().getUserId());
+
+        // Обновление пользователя в локальной модели
+        user = user!.copyWith(
+          name: fullName ?? user.name,
+          fileId: fileId ?? user.fileId,
+          phoneNumber: phone ?? user.phoneNumber,
         );
+        updateUser(user);
+        //final authRepo = getIt<AuthRepository>();
+        // Обновление данных в аккаунте Appwrite
+        if (fullName != null) {
+          await account.updateName(name: fullName);
+        }
+        // if (phone != null) {
+        //   authRepo.updatePhone(user.userId, phone);
+        // }
       }
-
-      await account.updateName(name: fullName);
-
-      // Optionally, update local state or navigate to another page
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Пррофиль успешно обновлен')),
-      );
     } catch (e) {
-      print('Failed to save profile data: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Не получилось обновить профиль')),
-      );
+      print('Ошибка при сохранении профиля: $e');
     }
   }
 
-  @override
-  Future<List<UserModel>> getUsers() async {
-    try {
+ @override
+Future<List<UserModel>> getUsers() async {
+ try {
       final response = await database.listDocuments(
-        collectionId: usersCollectionId,
         databaseId: dbId,
+        collectionId: usersCollectionId,
+          queries: [
+          Query.limit(5000),
+        ]
       );
-      return response.documents.map((doc) {
-        return UserModel.fromMap(doc.data);
-      }).toList();
+
+      return response.documents
+          .map((doc) => UserModel.fromMap(doc.data))
+          .toList();
     } catch (e) {
       print('Error fetching users: $e');
       return [];
     }
-  }
+}
+
 }

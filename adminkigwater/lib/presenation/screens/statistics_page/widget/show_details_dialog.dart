@@ -9,11 +9,29 @@ import 'package:flutter/material.dart';
 void showDetailsDialog(
   BuildContext context,
   String title,
-  List<Widget> tabs,
   List<UserModel> users,
   List<Deliverer> drivers,
   List<Order> orders,
 ) {
+  List<Widget> tabs;
+
+  if (title == 'Заказы') {
+    tabs = const [
+      Text('Всего заказов'),
+      Text('Статистика по активным заказам'),
+      Text('Статистика по завершенным заказам'),
+      Text('Статистика по отмененным заказам'),
+    ];
+  } else if (title == 'Пользователи') {
+    tabs = const [
+      Text('Статистика по всем пользователям'),
+      Text('Статистика по водовозам'),
+      Text('Статистика по заказщикам'),
+    ];
+  } else {
+    tabs = [const Text('Неизвестная категория')];
+  }
+
   showDialog(
     context: context,
     builder: (BuildContext context) {
@@ -25,102 +43,67 @@ void showDetailsDialog(
               title: Text(title),
               centerTitle: true,
               bottom: TabBar(
-                tabs: List.generate(
-                  tabs.length,
-                  (index) => Tab(
-                    text: _getTabText(title, index),
-                    icon: const Icon(Icons.info_outline),
-                  ),
-                ),
+                tabs: tabs.map((tab) => Tab(child: tab)).toList(),
               ),
             ),
             body: TabBarView(
               children: [
                 if (title == 'Заказы') ...[
-                  OrdersByLocationTab(orders: orders),
+                  AllOrdersTab(orders: orders),
                   OrdersByClientsTab(orders: orders),
                   OrdersBySuppliersTab(orders: orders),
+                  OrdersByCanceledTab(orders: orders), // Добавляем вкладку для отмененных заказов
                 ] else if (title == 'Пользователи') ...[
-                  UsersByLocationTab(users: users),
-                  NewUsersTab(users: users),
-                  DriverApplicationsTab(drivers: drivers),
-                ] else if (title == 'Другое') ...[
-                  ActiveOrdersByRegionsTab(orders: orders),
+                  AllUsersTab(users: users),
+                  DeliverersStatsTab(drivers: drivers),
+                  ClientsStatsTab(users: users, orders: orders,),
+                ] else ...[
+                  const Center(child: Text('Нет данных для отображения')),
                 ],
               ],
             ),
-            floatingActionButton: FloatingActionButton.extended(
-              onPressed: () async {
-                int currentIndex = DefaultTabController.of(context).index;
-                final excelService = getIt<ExcelService>();
-                if (title == 'Заказы') {
-                  switch (currentIndex) {
-                    case 0:
-                      await excelService.exportOrdersByLocationReport(orders);
-                      break;
-                    case 1:
-                      await excelService.exportOrdersByClientsReport(orders);
-                      break;
-                    case 2:
-                      await excelService.exportOrdersBySuppliersReport(orders);
-                      break;
-                    default:
-                      break;
-                  }
-                } else if (title == 'Пользователи') {
-                  switch (currentIndex) {
-                    case 0:
-                      await excelService.exportUsersByLocationReport(users);
-                      break;
-                    case 1:
-                      await excelService.exportNewUsersReport(users);
-                      break;
-                    case 2:
-                      await excelService
-                          .exportDriverApplicationsReport(drivers);
-                      break;
-                    default:
-                      break;
-                  }
-                } else if (title == 'Другое') {
-                  await excelService.exportActiveOrdersByRegionsReport(orders);
-                }
-              },
-              label: const Text('Выгрузить'),
-            ),
+            // floatingActionButton: FloatingActionButton.extended(
+            //   onPressed: () async {
+            //     int currentIndex = DefaultTabController.of(context).index;
+            //     final excelService = getIt<ExcelService>();
+            //     if (title == 'Заказы') {
+            //       switch (currentIndex) {
+            //         case 0:
+            //           await excelService.exportOrdersByLocationReport(orders);
+            //           break;
+            //         case 1:
+            //           await excelService.exportOrdersByClientsReport(orders);
+            //           break;
+            //         case 2:
+            //           await excelService.exportOrdersBySuppliersReport(orders);
+            //           break;
+            //         case 3:
+            //           //await excelService.exportOrdersByCanceledReport(orders);
+            //           break;
+            //         default:
+            //           break;
+            //       }
+            //     } else if (title == 'Пользователи') {
+            //       switch (currentIndex) {
+            //         case 0:
+            //           await excelService.exportUsersByLocationReport(users);
+            //           break;
+            //         case 1:
+            //           //await excelService.exportDeliverersStatsReport(drivers);
+            //           break;
+            //         case 2:
+            //           //await excelService.exportClientsStatsReport(users);
+            //           break;
+            //         default:
+            //           break;
+            //       }
+            //     }
+            //   },
+            //   label: const Text('Выгрузить'),
+            // ),
           ),
         ),
       );
     },
   );
-}
-
-String _getTabText(String title, int index) {
-  if (title == 'Заказы') {
-    switch (index) {
-      case 0:
-        return 'По локации';
-      case 1:
-        return 'По клиентам';
-      case 2:
-        return 'По поставщикам';
-      default:
-        return 'Unknown';
-    }
-  } else if (title == 'Пользователи') {
-    switch (index) {
-      case 0:
-        return 'По локации';
-      case 1:
-        return 'Новые пользователи';
-      case 2:
-        return 'Заявки водителей';
-      default:
-        return 'Unknown';
-    }
-  } else if (title == 'Другое') {
-    return 'Статистика по активным заказам и регионам';
-  } else {
-    return 'Unknown';
-  }
 }

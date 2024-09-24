@@ -1,15 +1,18 @@
-import 'dart:typed_data';
-
+import 'package:adminkigwater/data/datasources/local/excel_servise.dart';
 import 'package:adminkigwater/domain/entities/deliverer.dart';
+import 'package:adminkigwater/domain/entities/geolocation.dart';
 import 'package:adminkigwater/domain/entities/user_model.dart';
+import 'package:adminkigwater/domain/repositories/geolocation_repository.dart';
 import 'package:adminkigwater/domain/repositories/storage_repository.dart';
 import 'package:adminkigwater/domain/usecases/get_deliverers_use_case.dart';
 import 'package:adminkigwater/domain/usecases/get_user_by_id.dart';
 import 'package:adminkigwater/domain/usecases/update_deliverer_use_case.dart';
 import 'package:adminkigwater/injection_container.dart';
 import 'package:adminkigwater/presenation/screens/driver_request/widgets/deliver_card.dart';
-import 'package:adminkigwater/presenation/screens/driver_request/widgets/search_bar.dart';
 import 'package:adminkigwater/presenation/navigation/drawer.dart';
+import 'package:adminkigwater/presenation/screens/driver_request/widgets/show_deliverer_details.dart';
+import 'package:adminkigwater/presenation/widgets/export_button.dart';
+import 'package:adminkigwater/presenation/widgets/search_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
@@ -22,9 +25,11 @@ class DriverRequestsPage extends StatefulWidget {
 
 class _DriverRequestsPageState extends State<DriverRequestsPage> {
   List<Deliverer> _unavailableDeliverers = [];
-  Map<String, UserModel> _users = {}; // Map to cache user details by userId
+  Map<String, UserModel> _users = {};
   List<Deliverer> _filteredDeliverers = [];
+  List<Geolocation> geolocationList = [];
   final storageRepo = getIt<StorageRepository>();
+
   @override
   void initState() {
     super.initState();
@@ -35,7 +40,8 @@ class _DriverRequestsPageState extends State<DriverRequestsPage> {
     try {
       // Получаем всех доставщиков
       final deliverers = await getIt<GetDeliverers>().call();
-
+      geolocationList = await getIt<GeolocationRepository>()
+          .getGeolocationsByIds(deliverers.map((x) => x.userId).toList());
       // Фильтруем доставщиков, у которых isAvailable == null или false
       final unavailableDeliverers = deliverers
           .where((d) => d.isAvailable == null || d.isAvailable == false)
@@ -44,9 +50,7 @@ class _DriverRequestsPageState extends State<DriverRequestsPage> {
       // Кэшируем информацию о пользователях
       final userDetails = <String, UserModel>{};
       for (var deliverer in unavailableDeliverers) {
-        print(deliverer.userId);
         final user = await getIt<GetUserById>().call(deliverer.userId);
-
         userDetails[deliverer.userId] = user!;
       }
 
@@ -66,8 +70,16 @@ class _DriverRequestsPageState extends State<DriverRequestsPage> {
         final user = _users[deliverer.userId];
         final name = user?.name.toLowerCase() ?? '';
         final phone = user?.phoneNumber.toLowerCase() ?? '';
-        final city = user?.city.toLowerCase() ?? '';
+
+        // Проверяем, существует ли геолокация для данного доставщика
+        final geolocation = geolocationList.firstWhere(
+          (x) => x.geolocationId == deliverer.userId,
+        );
+
+        final city = geolocation.address.toLowerCase();
         final searchQueryLower = query.toLowerCase();
+
+        // Фильтруем по имени, телефону или городу
         return name.contains(searchQueryLower) ||
             phone.contains(searchQueryLower) ||
             city.contains(searchQueryLower);
@@ -75,114 +87,43 @@ class _DriverRequestsPageState extends State<DriverRequestsPage> {
     });
   }
 
-  void showDelivererDetails(
-      BuildContext context, Deliverer deliverer, UserModel user) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Детали доставщика'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text('ФИО: ${user.name}'),
-                Text('Телефон: ${user.phoneNumber}'),
-                Text('Регион: ${user.city}'),
-                FutureBuilder<Uint8List?>(
-                  future:
-                      storageRepo.getVodovozPhoto(deliverer.userId, "carPhoto"),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const CircularProgressIndicator();
-                    } else if (snapshot.hasError || !snapshot.hasData) {
-                      return const Text('Ошибка загрузки фото');
-                    } else {
-                      return SizedBox(
-                        height: 400.h, // высота изображения
-                        child: Image.memory(snapshot.data!),
-                      );
-                    }
-                  },
-                ),
-                FutureBuilder<Uint8List?>(
-                  future:
-                      storageRepo.getVodovozPhoto(deliverer.userId, "sorPhoto"),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const CircularProgressIndicator();
-                    } else if (snapshot.hasError || !snapshot.hasData) {
-                      return const Text('Ошибка загрузки фото');
-                    } else {
-                      return SizedBox(
-                        height: 400.h, // высота изображения
-                        child: Image.memory(snapshot.data!),
-                      );
-                    }
-                  },
-                ),
-                FutureBuilder<Uint8List?>(
-                  future: storageRepo.getVodovozPhoto(
-                      deliverer.userId, "licensePhoto"),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const CircularProgressIndicator();
-                    } else if (snapshot.hasError || !snapshot.hasData) {
-                      return const Text('Ошибка загрузки фото');
-                    } else {
-                      return SizedBox(
-                        height: 400.h, // высота изображения
-                        child: Image.memory(snapshot.data!),
-                      );
-                    }
-                  },
-                ),
-              ],
-            ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('Закрыть'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-            TextButton(
-              child: const Text('Принять'),
-              onPressed: () async {
-                deliverer.isAvailable = true;
-                await getIt<UpdateDeliverer>().call(deliverer);
-                Navigator.of(context).pop();
-                setState(() {
-                  _fetchUnavailableDeliverers();
-                });
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       drawer: getDrawer(context),
       appBar: AppBar(
-        title: const Text('Заявки продавцов'),
+        title: const Text('Заявки водовозов'),
         centerTitle: true,
       ),
-      body: (_filteredDeliverers.isNotEmpty)
+      body: (_filteredDeliverers.isNotEmpty ||
+              _unavailableDeliverers.isNotEmpty)
           ? Padding(
               padding: EdgeInsets.all(15.sp),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
+                  SizedBox(
+                    height: 15.h,
+                  ),
+                  ExportButton(
+                    buttonText:
+                        'Выгрузить статистику по всем заявкам водовозов',
+                    onExport: () {
+                      getIt<ExcelService>()
+                          .exportDriverApplicationsReport(_filteredDeliverers);
+                    },
+                  ),
+                  SizedBox(
+                    height: 15.h,
+                  ),
                   SearchWidget(
                     onSearch: _filterDeliverers,
                   ),
                   SizedBox(height: 10.h),
-                  _buildHeader(),
+                  Padding(
+                    padding: EdgeInsets.only(right: 345.w),
+                    child: _buildHeader(),
+                  ),
                   Expanded(
                     child: ListView.builder(
                       itemCount: _filteredDeliverers.length,
@@ -192,8 +133,23 @@ class _DriverRequestsPageState extends State<DriverRequestsPage> {
                         return DelivererCard(
                           deliverer: deliverer,
                           user: user!,
-                          onReview: () =>
-                              showDelivererDetails(context, deliverer, user),
+                          onReview: () => showDelivererDetails(
+                            context,
+                            deliverer,
+                            user,
+                            geolocationList,
+                            storageRepo,
+                            () async {
+                              deliverer.isAvailable = true;
+                              await getIt<UpdateDeliverer>().call(deliverer);
+
+                              // ignore: use_build_context_synchronously
+                              Navigator.of(context).pop();
+                              setState(() {
+                                _fetchUnavailableDeliverers();
+                              });
+                            },
+                          ),
                           index: index + 1,
                         );
                       },
@@ -203,7 +159,7 @@ class _DriverRequestsPageState extends State<DriverRequestsPage> {
               ),
             )
           : const Center(
-              child: Text('Заявок доставщиков пока нет'),
+              child: CircularProgressIndicator(),
             ),
     );
   }
@@ -213,20 +169,24 @@ Widget _buildHeader() {
   return Card(
     child: Row(
       children: [
-        _buildHeaderItem('№', 50),
-        _buildHeaderItem('ФИО', 230),
-        _buildHeaderItem('Телефон', 150),
-        _buildHeaderItem('Регион', 150),
+        _buildHeaderItem('№', 1),
+        _buildHeaderItem('ФИО', 3),
+        _buildHeaderItem('Телефон', 3),
+        _buildHeaderItem('Регион', 4),
       ],
     ),
   );
 }
 
-Widget _buildHeaderItem(String title, double width) {
-  return Padding(
-    padding: EdgeInsets.all(3.sp),
-    child: SizedBox(
-      width: width.w,
+Widget _buildHeaderItem(String title, int flex) {
+  return Expanded(
+    flex: (flex == 2 || flex == 4)
+        ? 3
+        : (flex == 3)
+            ? 2
+            : flex,
+    child: Padding(
+      padding: EdgeInsets.all(3.sp),
       child: OutlinedButton(
         onPressed: () {},
         child: Text(title, style: TextStyle(fontSize: 18.sp)),

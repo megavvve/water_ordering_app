@@ -8,11 +8,11 @@ class StatisticsCard extends StatelessWidget {
   final VoidCallback onTap;
 
   const StatisticsCard({
-    Key? key,
+    super.key,
     required this.title,
     required this.stats,
     required this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

@@ -34,10 +34,20 @@ class AdminCard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label,
-            style: TextStyle(fontSize: 20.sp, fontWeight: FontWeight.bold)),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 20.sp,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         SizedBox(height: 8.h),
-        Text(value, style: TextStyle(fontSize: 18.sp)),
+        SelectableText(
+          value,
+          style: TextStyle(
+            fontSize: 18.sp,
+          ),
+        ),
       ],
     );
   }

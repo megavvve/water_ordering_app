@@ -1,3 +1,4 @@
+import 'package:adminkigwater/data/datasources/local/excel_servise.dart';
 import 'package:adminkigwater/data/datasources/local/local_saved_data.dart';
 import 'package:adminkigwater/domain/entities/admin.dart';
 import 'package:adminkigwater/domain/usecases/get_admins_use_case.dart';
@@ -5,8 +6,9 @@ import 'package:adminkigwater/injection_container.dart';
 import 'package:adminkigwater/presenation/screens/admins_page/widgets/add_admin_dialog.dart';
 import 'package:adminkigwater/presenation/screens/admins_page/widgets/admins_card.dart';
 import 'package:adminkigwater/presenation/screens/admins_page/widgets/edit_admin_dialog.dart';
-import 'package:adminkigwater/presenation/screens/admins_page/widgets/search_bar.dart';
+import 'package:adminkigwater/presenation/widgets/search_bar.dart';
 import 'package:adminkigwater/presenation/navigation/drawer.dart';
+import 'package:adminkigwater/presenation/widgets/export_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
@@ -110,6 +112,18 @@ class _AdminsPageState extends State<AdminsPage> {
         padding: EdgeInsets.all(16.sp),
         child: Column(
           children: [
+            SizedBox(
+              height: 15.h,
+            ),
+            ExportButton(
+              buttonText: 'Выгрузить статистику по всем администраторам',
+              onExport: () {
+                getIt<ExcelService>().exportAdminsReport(_allAdmins);
+              },
+            ),
+            SizedBox(
+              height: 15.h,
+            ),
             SearchWidget(
               onSearch: (query) {
                 _searchAdmins(query);

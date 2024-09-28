@@ -1,5 +1,4 @@
-import 'package:adminkigwater/domain/repositories/geolocation_repository.dart';
-import 'package:adminkigwater/injection_container.dart';
+
 import 'package:flutter/material.dart';
 import 'package:adminkigwater/domain/entities/user_model.dart';
 
@@ -42,8 +41,9 @@ class _UserEditDialogState extends State<UserEditDialog> {
       ),
       actions: [
         TextButton(
-          onPressed: () async {
-            Navigator.of(context).pop(UserModel(
+          onPressed: () {
+            // Обновление пользователя с геолокацией или без неё
+            UserModel updatedUser = UserModel(
               userId: widget.user.userId,
               name: _nameController.text,
               phoneNumber: _phoneController.text,
@@ -52,13 +52,11 @@ class _UserEditDialogState extends State<UserEditDialog> {
               ratingId: widget.user.ratingId,
               token: widget.user.token,
               isOnline: widget.user.isOnline,
-              geolocationId: widget.user.geolocationId,
-            ));
-            final geo = await getIt<GeolocationRepository>().getGeolocation(
-                widget.user.geolocationId ?? widget.user.userId);
-            if (geo != null) {
-              getIt<GeolocationRepository>().updateGeolocation(geo);
-            }
+              // Если geolocationId отсутствует, присваиваем userId
+              geolocationId: widget.user.geolocationId ?? widget.user.userId,
+            );
+
+            Navigator.of(context).pop(updatedUser);
           },
           child: const Text('Save'),
         ),

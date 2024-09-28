@@ -10,11 +10,9 @@ Drawer getDrawer(context) {
     child: ListView(
       children: [
         DrawerHeader(
-            child: Container(
-          child: SizedBox(
-            height: 250,
-            child: Image.asset('assets/images/Icon512.png'),
-          ),
+            child: SizedBox(
+          height: 250,
+          child: Image.asset('assets/images/Icon512.png'),
         )),
         ListTile(
           enabled: permiss[0],
@@ -46,9 +44,9 @@ Drawer getDrawer(context) {
           enabled: permiss[3],
           onTap: () {
             Navigator.pushNamedAndRemoveUntil(
-                context, 'driverReq', (route) => false);
+                context, 'drivers', (route) => false);
           },
-          title: const Text('Заявки водовозов'),
+          title: const Text('Водовозы'),
           leading: const Icon(Icons.fire_truck_outlined),
         ),
         ListTile(

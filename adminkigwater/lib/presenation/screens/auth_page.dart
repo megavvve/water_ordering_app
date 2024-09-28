@@ -2,7 +2,7 @@ import 'package:adminkigwater/data/datasources/local/local_saved_data.dart';
 import 'package:adminkigwater/domain/repositories/admin_repository.dart';
 import 'package:adminkigwater/domain/repositories/auth_repository.dart';
 import 'package:adminkigwater/injection_container.dart';
-import 'package:adminkigwater/presenation/navigation/set_page.dart';
+import 'package:adminkigwater/presenation/widgets/navigation/set_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 

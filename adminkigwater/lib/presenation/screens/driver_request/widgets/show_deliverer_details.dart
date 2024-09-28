@@ -165,10 +165,10 @@ void showDelivererDetails(
           TextButton(
             onPressed: onPressed,
             style: TextButton.styleFrom(
-              backgroundColor: Colors.green,
+              backgroundColor: (deliverer.isAvailable==true)?Colors.red:Colors.green,
               padding: EdgeInsets.symmetric(vertical: 10.h, horizontal: 20.w),
             ),
-            child: const Text('Принять', style: TextStyle(color: Colors.white)),
+            child:  Text((deliverer.isAvailable==true)?'Убрать из водовозов':'Принять', style: const TextStyle(color: Colors.white)),
           ),
         ],
       );

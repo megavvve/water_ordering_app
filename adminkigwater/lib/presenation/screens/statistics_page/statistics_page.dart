@@ -8,7 +8,7 @@ import 'package:adminkigwater/domain/repositories/order_repository.dart';
 import 'package:adminkigwater/domain/usecases/get_deliverers_use_case.dart';
 import 'package:adminkigwater/domain/usecases/get_users_use_case.dart';
 import 'package:adminkigwater/injection_container.dart';
-import 'package:adminkigwater/presenation/navigation/drawer.dart';
+import 'package:adminkigwater/presenation/widgets/navigation/drawer.dart';
 import 'package:adminkigwater/presenation/screens/statistics_page/widget/show_details_dialog.dart';
 import 'package:adminkigwater/presenation/screens/statistics_page/widget/statistics_card.dart';
 import 'package:adminkigwater/utils/enums/order_status.dart';
@@ -55,7 +55,8 @@ class _StatisticsPageState extends State<StatisticsPage> {
       _acceptedOrders = orders
           .where((order) =>
               order.status == OrderStatus.accepted.name ||
-              order.status == OrderStatus.inProgress.name||order.status == OrderStatus.pending.name ||
+              order.status == OrderStatus.inProgress.name ||
+              order.status == OrderStatus.pending.name ||
               order.status == OrderStatus.awaitingConfirmation.name)
           .length;
       _completedOrders = orders
@@ -129,7 +130,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
                       },
                     ),
                     SizedBox(width: 15.w),
-              
+
                     // StatisticsCard(
                     //   title: 'Другое',
                     //   stats: {

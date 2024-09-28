@@ -13,7 +13,7 @@ Future<void> main() async {
   setupLocator();
   bool isAuthenticated;
   try {
-    //await AppWrite().getAccount().deleteSession(sessionId: 'current');
+    await AppWrite().getAccount().deleteSession(sessionId: 'current');
     await AppWrite().getAccount().get();
     isAuthenticated = true;
   } catch (err) {
@@ -44,7 +44,7 @@ class MyApp extends StatelessWidget {
               'geo': (context) => const GeoActivityPage(),
               'users': (context) => const UsersPage(),
               'stats': (context) => const StatisticsPage(),
-              'driverReq': (context) => const DriverRequestsPage(),
+              'drivers': (context) => const DriversPage(),
               'admins': (context) => const AdminsPage(),
               'login': (context) => const AuthPage(),
             },

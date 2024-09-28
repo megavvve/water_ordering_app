@@ -9,26 +9,29 @@ import 'package:adminkigwater/domain/usecases/get_user_by_id.dart';
 import 'package:adminkigwater/domain/usecases/update_deliverer_use_case.dart';
 import 'package:adminkigwater/injection_container.dart';
 import 'package:adminkigwater/presenation/screens/driver_request/widgets/deliver_card.dart';
-import 'package:adminkigwater/presenation/navigation/drawer.dart';
+import 'package:adminkigwater/presenation/widgets/get_cities_from_geo_list.dart';
+import 'package:adminkigwater/presenation/widgets/navigation/drawer.dart';
 import 'package:adminkigwater/presenation/screens/driver_request/widgets/show_deliverer_details.dart';
 import 'package:adminkigwater/presenation/widgets/export_button.dart';
 import 'package:adminkigwater/presenation/widgets/search_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-class DriverRequestsPage extends StatefulWidget {
-  const DriverRequestsPage({super.key});
+class DriversPage extends StatefulWidget {
+  const DriversPage({super.key});
 
   @override
-  State<StatefulWidget> createState() => _DriverRequestsPageState();
+  State<StatefulWidget> createState() => _DriversPageState();
 }
 
-class _DriverRequestsPageState extends State<DriverRequestsPage> {
-  List<Deliverer> _unavailableDeliverers = [];
+class _DriversPageState extends State<DriversPage> {
   Map<String, UserModel> _users = {};
   List<Deliverer> _filteredDeliverers = [];
+  List<Deliverer> _allDeliverers = []; // Список для хранения всех водовозов
   List<Geolocation> geolocationList = [];
   final storageRepo = getIt<StorageRepository>();
+  String? _selectedCity = 'Все города'; // Выбранный город
+  List<String?> cities = []; // Список всех городов
 
   @override
   void initState() {
@@ -38,26 +41,35 @@ class _DriverRequestsPageState extends State<DriverRequestsPage> {
 
   Future<void> _fetchUnavailableDeliverers() async {
     try {
-      // Получаем всех доставщиков
-      final deliverers = await getIt<GetDeliverers>().call();
+      final deliverersFromApi = await getIt<GetDeliverers>().call();
       geolocationList = await getIt<GeolocationRepository>()
-          .getGeolocationsByIds(deliverers.map((x) => x.userId).toList());
-      // Фильтруем доставщиков, у которых isAvailable == null или false
-      final unavailableDeliverers = deliverers
+          .getGeolocationsByIds(
+              deliverersFromApi.map((x) => x.userId).toList());
+
+      // Разделяем водовозов на две группы
+      final unavailableDeliverers = deliverersFromApi
           .where((d) => d.isAvailable == null || d.isAvailable == false)
           .toList();
+      final availableDeliverers =
+          deliverersFromApi.where((d) => d.isAvailable == true).toList();
 
-      // Кэшируем информацию о пользователях
+      final deliverers = [...unavailableDeliverers, ...availableDeliverers];
+
+      // Получаем уникальные города
+      List<String> citiesList = getCitiesFromGeoList(geolocationList);
+
+      // Получаем пользователей
       final userDetails = <String, UserModel>{};
-      for (var deliverer in unavailableDeliverers) {
+      for (var deliverer in deliverers) {
         final user = await getIt<GetUserById>().call(deliverer.userId);
         userDetails[deliverer.userId] = user!;
       }
 
       setState(() {
-        _unavailableDeliverers = unavailableDeliverers;
+        cities = citiesList; // Устанавливаем список городов
         _users = userDetails;
-        _filteredDeliverers = unavailableDeliverers;
+        _allDeliverers = deliverers; // Сохраняем всех водовозов
+        _filteredDeliverers = deliverers; // По умолчанию показываем всех
       });
     } catch (e) {
       print('Error fetching deliverers: $e');
@@ -66,12 +78,11 @@ class _DriverRequestsPageState extends State<DriverRequestsPage> {
 
   void _filterDeliverers(String query) {
     setState(() {
-      _filteredDeliverers = _unavailableDeliverers.where((deliverer) {
+      _filteredDeliverers = _allDeliverers.where((deliverer) {
         final user = _users[deliverer.userId];
         final name = user?.name.toLowerCase() ?? '';
         final phone = user?.phoneNumber.toLowerCase() ?? '';
 
-        // Проверяем, существует ли геолокация для данного доставщика
         final geolocation = geolocationList.firstWhere(
           (x) => x.geolocationId == deliverer.userId,
         );
@@ -79,118 +90,130 @@ class _DriverRequestsPageState extends State<DriverRequestsPage> {
         final city = geolocation.address.toLowerCase();
         final searchQueryLower = query.toLowerCase();
 
-        // Фильтруем по имени, телефону или городу
-        return name.contains(searchQueryLower) ||
-            phone.contains(searchQueryLower) ||
-            city.contains(searchQueryLower);
+        return (name.contains(searchQueryLower) ||
+                phone.contains(searchQueryLower) ||
+                city.contains(searchQueryLower)) &&
+            (_selectedCity == 'Все города' ||
+                city.contains(_selectedCity!.toLowerCase()));
       }).toList();
+    });
+  }
+
+  void _onCitySelected(String? selectedCity) {
+    setState(() {
+      _selectedCity = selectedCity;
+      _filterDeliverers('');
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    final pendingDeliverers = _filteredDeliverers
+        .where((d) => d.isAvailable == null || d.isAvailable == false)
+        .toList();
+    final confirmedDeliverers =
+        _filteredDeliverers.where((d) => d.isAvailable == true).toList();
+
     return Scaffold(
       drawer: getDrawer(context),
       appBar: AppBar(
         title: const Text('Заявки водовозов'),
         centerTitle: true,
       ),
-      body: (_filteredDeliverers.isNotEmpty ||
-              _unavailableDeliverers.isNotEmpty)
-          ? Padding(
-              padding: EdgeInsets.all(15.sp),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  SizedBox(
-                    height: 15.h,
-                  ),
-                  ExportButton(
-                    buttonText:
-                        'Выгрузить статистику по всем заявкам водовозов',
-                    onExport: () {
-                      getIt<ExcelService>()
-                          .exportDriverApplicationsReport(_filteredDeliverers);
-                    },
-                  ),
-                  SizedBox(
-                    height: 15.h,
-                  ),
-                  SearchWidget(
-                    onSearch: _filterDeliverers,
-                  ),
-                  SizedBox(height: 10.h),
-                  Padding(
-                    padding: EdgeInsets.only(right: 345.w),
-                    child: _buildHeader(),
-                  ),
-                  Expanded(
-                    child: ListView.builder(
-                      itemCount: _filteredDeliverers.length,
-                      itemBuilder: (BuildContext context, int index) {
-                        final deliverer = _filteredDeliverers[index];
-                        final user = _users[deliverer.userId];
-                        return DelivererCard(
-                          deliverer: deliverer,
-                          user: user!,
-                          onReview: () => showDelivererDetails(
-                            context,
-                            deliverer,
-                            user,
-                            geolocationList,
-                            storageRepo,
-                            () async {
-                              deliverer.isAvailable = true;
-                              await getIt<UpdateDeliverer>().call(deliverer);
-
-                              // ignore: use_build_context_synchronously
-                              Navigator.of(context).pop();
-                              setState(() {
-                                _fetchUnavailableDeliverers();
-                              });
-                            },
-                          ),
-                          index: index + 1,
-                        );
-                      },
-                    ),
-                  ),
-                ],
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: EdgeInsets.all(15.sp),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              SizedBox(height: 15.h),
+              DropdownButton<String?>(
+                value: _selectedCity,
+                items: cities.map((String? city) {
+                  return DropdownMenuItem<String?>(
+                    value: city,
+                    child: Text(city ?? 'Неизвестный город'),
+                  );
+                }).toList(),
+                onChanged: _onCitySelected,
               ),
-            )
-          : const Center(
-              child: CircularProgressIndicator(),
-            ),
+
+              SizedBox(height: 15.h),
+              ExportButton(
+                buttonText: 'Выгрузить статистику водовозов по: $_selectedCity',
+                onExport: () {
+                  getIt<ExcelService>()
+                      .exportDriverApplicationsReport(_filteredDeliverers);
+                },
+              ),
+              SizedBox(height: 10.h),
+              SearchWidget(onSearch: _filterDeliverers),
+              SizedBox(height: 10.h),
+              // Заголовок для заявок на рассмотрении
+              if (pendingDeliverers.isNotEmpty)
+                _buildSectionHeader('Заявки на рассмотрении', Icons.pending),
+              _buildDelivererList(pendingDeliverers, false),
+              // Заголовок для подтвержденных водовозов
+              if (confirmedDeliverers.isNotEmpty)
+                _buildSectionHeader(
+                    'Подтвержденные водовозы', Icons.check_circle),
+              _buildDelivererList(confirmedDeliverers, true),
+            ],
+          ),
+        ),
+      ),
     );
   }
-}
 
-Widget _buildHeader() {
-  return Card(
-    child: Row(
-      children: [
-        _buildHeaderItem('№', 1),
-        _buildHeaderItem('ФИО', 3),
-        _buildHeaderItem('Телефон', 3),
-        _buildHeaderItem('Регион', 4),
-      ],
-    ),
-  );
-}
-
-Widget _buildHeaderItem(String title, int flex) {
-  return Expanded(
-    flex: (flex == 2 || flex == 4)
-        ? 3
-        : (flex == 3)
-            ? 2
-            : flex,
-    child: Padding(
-      padding: EdgeInsets.all(3.sp),
-      child: OutlinedButton(
-        onPressed: () {},
-        child: Text(title, style: TextStyle(fontSize: 18.sp)),
+  Widget _buildSectionHeader(String title, IconData icon) {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 10.h),
+      child: Row(
+        children: [
+          Icon(icon, color: Colors.blue),
+          SizedBox(width: 10.w),
+          Text(
+            title,
+            style: TextStyle(fontSize: 20.sp, fontWeight: FontWeight.bold),
+          ),
+        ],
       ),
-    ),
-  );
+    );
+  }
+
+  Widget _buildDelivererList(List<Deliverer> deliverers, bool isConfirmed) {
+    return ListView.builder(
+      physics: const NeverScrollableScrollPhysics(),
+      shrinkWrap: true,
+      itemCount: deliverers.length,
+      itemBuilder: (BuildContext context, int index) {
+        final deliverer = deliverers[index];
+        final user = _users[deliverer.userId];
+        return DelivererCard(
+          deliverer: deliverer,
+          user: user!,
+          onReview: () => showDelivererDetails(
+            context,
+            deliverer,
+            user,
+            geolocationList,
+            storageRepo,
+            () async {
+              deliverer.isAvailable == true
+                  ? deliverer.isAvailable = false
+                  : deliverer.isAvailable = true;
+              await getIt<UpdateDeliverer>().call(deliverer);
+              Navigator.of(context).pop();
+              setState(() {
+                _fetchUnavailableDeliverers();
+              });
+            },
+          ),
+          index: index + 1,
+          isConfirmed: isConfirmed,
+        );
+      },
+    );
+  }
 }

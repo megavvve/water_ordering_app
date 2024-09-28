@@ -7,7 +7,7 @@ import 'package:adminkigwater/presenation/screens/admins_page/widgets/add_admin_
 import 'package:adminkigwater/presenation/screens/admins_page/widgets/admins_card.dart';
 import 'package:adminkigwater/presenation/screens/admins_page/widgets/edit_admin_dialog.dart';
 import 'package:adminkigwater/presenation/widgets/search_bar.dart';
-import 'package:adminkigwater/presenation/navigation/drawer.dart';
+import 'package:adminkigwater/presenation/widgets/navigation/drawer.dart';
 import 'package:adminkigwater/presenation/widgets/export_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';

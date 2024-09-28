@@ -27,8 +27,15 @@ class UserListWidget extends StatelessWidget {
         itemCount: users.length,
         itemBuilder: (BuildContext context, int index) {
           UserModel user = users[index];
-          Geolocation? geolocation =
-              geolocations.length > index ? geolocations[index] : null;
+          Geolocation? geolocation;
+        try {
+          geolocation = geolocations.firstWhere(
+            (geo) => geo?.geolocationId == user.userId,
+          );
+        } catch (e) {
+          geolocation = null;
+        }
+
 
           // Default values for empty fields
           String userName = user.name.isNotEmpty ? user.name : "имя не указано";
@@ -38,7 +45,7 @@ class UserListWidget extends StatelessWidget {
           String userAddress =
               geolocation != null && geolocation.address.isNotEmpty
                   ? geolocation.address
-                  : "город не указан";
+                  : "Город не указан";
 
           return Card(
             color: Colors.white,

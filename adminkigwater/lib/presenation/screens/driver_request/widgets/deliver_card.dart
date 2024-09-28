@@ -11,6 +11,7 @@ class DelivererCard extends StatelessWidget {
   final Deliverer deliverer;
   final UserModel user;
   final VoidCallback onReview;
+  final bool isConfirmed;
 
   const DelivererCard({
     super.key,
@@ -18,6 +19,7 @@ class DelivererCard extends StatelessWidget {
     required this.deliverer,
     required this.user,
     required this.onReview,
+    this.isConfirmed = false,
   });
 
   @override
@@ -26,66 +28,61 @@ class DelivererCard extends StatelessWidget {
       future: getIt<GeolocationRepository>().getGeolocation(user.userId),
       builder: (context, snapshot) {
         return Card(
-          color: Colors.white,
+          color: isConfirmed ? Colors.green[50] : Colors.yellow[50],
           child: Padding(
             padding: EdgeInsets.all(3.sp),
             child: Row(
               children: [
                 Expanded(
                   flex: 1,
-                  child: Padding(
-                    padding: EdgeInsets.all(3.sp),
-                    child: OutlinedButton(
-                      onPressed: () {},
-                      child: Text('$index', style: TextStyle(fontSize: 18.sp)),
+                  child: Text(
+                    '$index',
+                    style: TextStyle(
+                      fontSize: 18.sp,
                     ),
                   ),
                 ),
                 Expanded(
                   flex: 3,
-                  child: Padding(
-                    padding: EdgeInsets.all(3.sp),
-                    child: OutlinedButton(
-                      onPressed: () {},
-                      child: Text(user.name, style: TextStyle(fontSize: 18.sp)),
+                  child: Text(
+                    user.name,
+                    style: TextStyle(
+                      fontSize: 18.sp,
                     ),
                   ),
                 ),
                 Expanded(
                   flex: 2,
-                  child: Padding(
-                    padding: EdgeInsets.all(3.sp),
-                    child: OutlinedButton(
-                      onPressed: () {},
-                      child: Text(user.phoneNumber,
-                          style: TextStyle(fontSize: 18.sp)),
+                  child: Text(
+                    user.phoneNumber,
+                    style: TextStyle(
+                      fontSize: 18.sp,
                     ),
                   ),
                 ),
                 Expanded(
                   flex: 3,
-                  child: Padding(
-                    padding: EdgeInsets.all(3.sp),
-                    child: OutlinedButton(
-                      onPressed: () {},
-                      child: Text(
-                        snapshot.data != null
-                            ? snapshot.data!.address
-                            : 'Адрес не известен',
-                        style: TextStyle(fontSize: 18.sp),
+                  child: Text(
+                    snapshot.data != null
+                        ? snapshot.data!.address
+                        : 'Адрес не известен',
+                    style: TextStyle(
+                      fontSize: 18.sp,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: ElevatedButton.icon(
+                    onPressed: onReview,
+                    icon: const Icon(
+                      Icons.pending,
+                    ),
+                    label: Text(
+                      'Рассмотреть',
+                      style: TextStyle(
+                        fontSize: 18.sp,
                       ),
-                    ),
-                  ),
-                ),
-                Expanded(
-                  flex: 2,
-                  child: Padding(
-                    padding: EdgeInsets.all(3.sp),
-                    child: ElevatedButton.icon(
-                      onPressed: onReview,
-                      icon: const Icon(Icons.account_circle_outlined),
-                      label: Text('Рассмотреть',
-                          style: TextStyle(fontSize: 18.sp)),
                     ),
                   ),
                 ),

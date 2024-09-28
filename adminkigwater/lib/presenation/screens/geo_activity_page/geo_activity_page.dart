@@ -1,6 +1,8 @@
 import 'package:adminkigwater/data/datasources/local/excel_servise.dart';
 import 'package:adminkigwater/domain/repositories/order_repository.dart';
-import 'package:adminkigwater/presenation/navigation/drawer.dart';
+import 'package:adminkigwater/presenation/screens/geo_activity_page/widgets/order_details_page.dart';
+import 'package:adminkigwater/presenation/widgets/get_cities_from_geo_list.dart';
+import 'package:adminkigwater/presenation/widgets/navigation/drawer.dart';
 import 'package:adminkigwater/presenation/widgets/export_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -10,8 +12,8 @@ import 'package:adminkigwater/domain/entities/user_model.dart';
 import 'package:adminkigwater/domain/repositories/geolocation_repository.dart';
 import 'package:adminkigwater/domain/usecases/get_users_use_case.dart';
 import 'package:adminkigwater/injection_container.dart';
-import 'package:adminkigwater/presenation/screens/geo_activity_page/widgets/build_statistic_card.dart';
 import 'package:adminkigwater/utils/enums/order_status.dart';
+import 'package:intl/intl.dart';
 
 class GeoActivityPage extends StatefulWidget {
   const GeoActivityPage({super.key});
@@ -24,7 +26,10 @@ class _GeoActivityPageState extends State<GeoActivityPage> {
   List<Order> orders = [];
   List<Geolocation> orderGeolocations = [];
   List<UserModel> users = [];
-  bool sortByOrderCount = false;
+  List<String?> cities = [];
+  String? selectedCity = 'Все города';
+  DateTime? startDate;
+  DateTime? endDate;
 
   @override
   void initState() {
@@ -34,248 +39,206 @@ class _GeoActivityPageState extends State<GeoActivityPage> {
 
   Future<void> loadData() async {
     orders = await getIt<OrderRepository>().getOrders();
-    orderGeolocations =
-        await getIt<GeolocationRepository>().getGeolocationsByIds(
-      orders.map((order) => order.id).toList(),
-    );
+    orderGeolocations = await getIt<GeolocationRepository>()
+        .getGeolocationsByIds(orders.map((order) => order.id).toList());
     users = await getIt<GetUsers>().call();
+
+    cities = getCitiesFromGeoList(orderGeolocations);
+
+    // Сортировка по алфавиту
+    cities.sort((a, b) => a!.compareTo(b!));
+    cities.remove('Город не указан');
     setState(() {});
   }
 
-  Map<String, Map<String, Map<String, int>>> calculateStatistics() {
-    Map<String, Map<String, Map<String, int>>> stats = {};
-
-    for (var geolocation in orderGeolocations) {
-      List<String> addressParts = geolocation.address.split(',');
-
-      if (addressParts.length >= 3) {
-        String country = addressParts[0].trim();
-        String region = addressParts[1].trim();
-        String locality = addressParts[2].trim();
-
-        stats[country] ??= {};
-        stats[country]![region] ??= {};
-        stats[country]![region]![locality] =
-            (stats[country]![region]![locality] ?? 0) + 1;
-      }
-    }
-
-    return stats;
-  }
-
-  Future<void> exportToExcel() async {
-    print("Экспорт в Excel");
-  }
-
-  void toggleSortOrder() {
-    setState(() {
-      sortByOrderCount = !sortByOrderCount;
-    });
-  }
-
-  void showDetailedStatistics(String location, List<Order> locationOrders) {
-    showDialog(
+  Future<void> _selectDate(BuildContext context, bool isStart) async {
+    final DateTime? picked = await showDatePicker(
       context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Подробная статистика по $location'),
-          content: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: locationOrders.map((order) {
-                return Text(
-                  'Заказ №${order.id.hashCode}, адрес: ${orderGeolocations.firstWhere((x) => x.geolocationId == order.id).address}\nстатус: ${translateOrderStatus(order.status)}\n',
-                );
-              }).toList(),
-            ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text('Закрыть'),
-            ),
-          ],
-        );
-      },
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2030),
     );
+    if (picked != null) {
+      setState(() {
+        if (isStart) {
+          startDate = picked;
+        } else {
+          endDate = picked;
+        }
+      });
+    }
+  }
+
+  List<Order> getFilteredOrders() {
+    return orders.where((order) {
+      Geolocation? geolocation;
+      try {
+        geolocation = orderGeolocations
+            .firstWhere((geo) => geo.geolocationId == order.id);
+      } catch (e) {
+        geolocation = null;
+      }
+
+      final cityMatches = selectedCity == 'Все города' ||
+          (geolocation != null && geolocation.address.contains(selectedCity!));
+      final orderDate = DateFormat('yyyy-MM-dd').parse(order.createdAt);
+      final dateMatches =
+          (startDate == null || orderDate.isAfter(startDate!)) &&
+              (endDate == null || orderDate.isBefore(endDate!));
+      return cityMatches && dateMatches;
+    }).toList();
   }
 
   @override
   Widget build(BuildContext context) {
-    Map<String, Map<String, Map<String, int>>> stats = calculateStatistics();
+    final filteredOrders = getFilteredOrders();
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Гео-активность заказов'),
+        title: const Text('Активность заказов и исполнение'),
         centerTitle: true,
+        backgroundColor: Colors.teal,
+        elevation: 0,
       ),
       drawer: getDrawer(context),
       body: Padding(
-        padding: EdgeInsets.all(20.sp),
-        child: Stack(
+        padding: EdgeInsets.all(15.sp),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            SingleChildScrollView(
-              // Enable vertical scrolling
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  ExportButton(
-                    buttonText: 'Выгрузить статистику по геоактивности',
-                    onExport: () {
-                      getIt<ExcelService>().exportGeolocationStatistics(stats);
-                    },
-                  ),
-                  SizedBox(height: 15.h),
-                  Text(
-                    'Всего заказов: ${orders.length}',
-                    style:
-                        TextStyle(fontSize: 24.sp, fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(height: 20.h),
-                  Row(
-                    children: [
-                      buildStatisticsCard(
-                          'Активные заказы',
-                          orders
-                              .where((x) =>
-                                  x.status == OrderStatus.pending.name ||
-                                  x.status ==
-                                      OrderStatus.awaitingConfirmation.name ||
-                                  x.status == OrderStatus.accepted.name ||
-                                  x.status == OrderStatus.inProgress.name)
-                              .length
-                              .toString()),
-                      SizedBox(width: 20.w),
-                      buildStatisticsCard(
-                          'Завершенные заказы',
-                          orders
-                              .where((x) =>
-                                  x.status == OrderStatus.canceled.name ||
-                                  x.status == OrderStatus.completed.name)
-                              .length
-                              .toString()),
-                      SizedBox(width: 20.w),
-                      buildStatisticsCard(
-                          'Всего клиентов', users.length.toString()),
-                    ],
-                  ),
-                  SizedBox(height: 30.h),
-                  Text(
-                    'Статистика по странам, регионам и городам',
-                    style:
-                        TextStyle(fontSize: 22.sp, fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(height: 10.h),
-                  ElevatedButton(
-                    onPressed: toggleSortOrder,
-                    child: Text(sortByOrderCount
-                        ? 'Сортировать по алфавиту'
-                        : 'Сортировать по количеству заказов'),
-                  ),
-                  SizedBox(height: 20.h),
+            // Кнопка для экспорта
+            ExportButton(
+              buttonText: 'Выгрузить статистику по : $selectedCity',
+              onExport: () {
+                getIt<ExcelService>()
+                    .exportOrdersByLocationReport(filteredOrders);
+              },
+            ),
+            SizedBox(height: 15.h),
+            Text(
+              "Статистика заказов",
+              style: TextStyle(fontSize: 24.sp, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 15.h),
 
-                  // Horizontal Scrolling
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: stats.entries.map((countryEntry) {
-                        String country = countryEntry.key;
-                        Map<String, Map<String, int>> regions =
-                            countryEntry.value;
+            // Выбор города
+            SizedBox(
+              width: 400.w,
+              child: DropdownButton<String?>(
+                value: selectedCity,
+                items: cities.map((String? city) {
+                  return DropdownMenuItem<String?>(
+                    value: city,
+                    child: Text(city!),
+                  );
+                }).toList(),
+                onChanged: (String? newValue) {
+                  setState(() {
+                    selectedCity = newValue!;
+                  });
+                },
+                hint: const Text("Выберите город"),
+                isExpanded: true,
+                icon: const Icon(Icons.keyboard_arrow_down, color: Colors.teal),
+              ),
+            ),
+            SizedBox(height: 10.h),
 
-                        List<MapEntry<String, Map<String, int>>> sortedRegions =
-                            regions.entries.toList();
-                        if (sortByOrderCount) {
-                          sortedRegions.sort(
-                            (a, b) => b.value.values
-                                .reduce((sum, element) => sum + element)
-                                .compareTo(
-                                  a.value.values
-                                      .reduce((sum, element) => sum + element),
-                                ),
-                          );
-                        }
+            // Выбор периода
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                ElevatedButton(
+                  onPressed: () => _selectDate(context, true),
+                  child: Text(startDate != null
+                      ? DateFormat('yyyy-MM-dd').format(startDate!)
+                      : "Дата начала"),
+                ),
+                SizedBox(
+                  width: 15.w,
+                ),
+                ElevatedButton(
+                  onPressed: () => _selectDate(context, false),
+                  child: Text(endDate != null
+                      ? DateFormat('yyyy-MM-dd').format(endDate!)
+                      : "Дата окончания"),
+                ),
+              ],
+            ),
+            SizedBox(height: 10.h),
 
-                        return Padding(
-                          padding: EdgeInsets.only(right: 20.w),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                country,
-                                style: TextStyle(
-                                  fontSize: 20.sp,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.blueAccent,
-                                ),
-                              ),
-                              SizedBox(height: 10.h),
-                              ...sortedRegions.map((regionEntry) {
-                                String region = regionEntry.key;
-                                Map<String, int> localities = regionEntry.value;
+            Expanded(
+              child: ListView.builder(
+                itemCount: filteredOrders.length,
+                itemBuilder: (BuildContext context, int index) {
+                  final order = filteredOrders[index];
+                  Geolocation? geolocation;
+                  try {
+                    geolocation = orderGeolocations
+                        .firstWhere((geo) => geo.geolocationId == order.id);
+                  } catch (e) {
+                    geolocation = null;
+                  }
 
-                                return Padding(
-                                  padding: EdgeInsets.only(bottom: 10.h),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        region,
-                                        style: TextStyle(
-                                          fontSize: 18.sp,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.green,
-                                        ),
-                                      ),
-                                      SizedBox(height: 5.h),
-                                      ...localities.entries
-                                          .map((localityEntry) {
-                                        String locality = localityEntry.key;
-                                        int orderCount = localityEntry.value;
-
-                                        return GestureDetector(
-                                          onTap: () {
-                                            List<Order> localityOrders = orders
-                                                .where(
-                                                  (order) =>
-                                                      orderGeolocations.any(
-                                                    (geo) =>
-                                                        geo.address.contains(
-                                                            locality) &&
-                                                        order.id ==
-                                                            geo.geolocationId,
-                                                  ),
-                                                )
-                                                .toList();
-                                            showDetailedStatistics(
-                                                locality, localityOrders);
-                                          },
-                                          child: Padding(
-                                            padding:
-                                                EdgeInsets.only(left: 32.w),
-                                            child: Text(
-                                              '$locality: $orderCount заказов',
-                                              style: TextStyle(
-                                                fontSize: 18.sp,
-                                              ),
-                                            ),
-                                          ),
-                                        );
-                                      }),
-                                    ],
+                  return Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 100.0.w,
+                      ),
+                      child: Tooltip(
+                        message:
+                            'Статус: ${translateOrderStatus(order.status)}',
+                        child: Card(
+                          elevation: 4,
+                          margin: EdgeInsets.symmetric(vertical: 10.h),
+                          child: ListTile(
+                            title: Text('Заказ № ${order.id.hashCode}'),
+                            subtitle: Text.rich(
+                              TextSpan(
+                                children: [
+                                  const TextSpan(
+                                    text: 'Город: ',
+                                    style:
+                                        TextStyle(fontWeight: FontWeight.bold),
                                   ),
-                                );
-                              }),
-                            ],
+                                  TextSpan(
+                                    text: geolocation != null
+                                        ? '${geolocation.address}\n'
+                                        : 'Не указан\n',
+                                  ),
+                                  const TextSpan(
+                                    text: 'Дата: ',
+                                    style:
+                                        TextStyle(fontWeight: FontWeight.bold),
+                                  ),
+                                  TextSpan(
+                                    text: order.createdAt,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            trailing: Icon(
+                              order.status == OrderStatus.completed.name
+                                  ? Icons.check_circle
+                                  : Icons.pending,
+                              color: order.status == OrderStatus.completed.name
+                                  ? Colors.green
+                                  : Colors.orange,
+                            ),
+                            onTap: () {
+                              // Переход на страницу с полной информацией о заказе
+                              showDialog(
+                                  context: context,
+                                  builder: (BuildContext context) {
+                                    return OrderDetailsPage(
+                                      order: order,
+                                    );
+                                  });
+                            },
                           ),
-                        );
-                      }).toList(),
-                    ),
-                  ),
-                ],
+                        ),
+                      ));
+                },
               ),
             ),
           ],

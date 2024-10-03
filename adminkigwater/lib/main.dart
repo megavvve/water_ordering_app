@@ -2,7 +2,7 @@ import 'package:adminkigwater/data/datasources/remote/appwrite.dart';
 import 'package:adminkigwater/injection_container.dart';
 import 'package:adminkigwater/presenation/screens/admins_page/admins_page.dart';
 import 'package:adminkigwater/presenation/screens/auth_page.dart';
-import 'package:adminkigwater/presenation/screens/driver_request/driver_request.dart';
+import 'package:adminkigwater/presenation/screens/driver_request/driver_page.dart';
 import 'package:adminkigwater/presenation/screens/geo_activity_page/geo_activity_page.dart';
 import 'package:adminkigwater/presenation/screens/statistics_page/statistics_page.dart';
 import 'package:adminkigwater/presenation/screens/user_page/user_page.dart';

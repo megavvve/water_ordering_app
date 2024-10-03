@@ -9,6 +9,7 @@ import 'package:adminkigwater/domain/usecases/get_user_by_id.dart';
 import 'package:adminkigwater/domain/usecases/update_deliverer_use_case.dart';
 import 'package:adminkigwater/injection_container.dart';
 import 'package:adminkigwater/presenation/screens/driver_request/widgets/deliver_card.dart';
+import 'package:adminkigwater/presenation/widgets/city_dropdown_search.dart';
 import 'package:adminkigwater/presenation/widgets/get_cities_from_geo_list.dart';
 import 'package:adminkigwater/presenation/widgets/navigation/drawer.dart';
 import 'package:adminkigwater/presenation/screens/driver_request/widgets/show_deliverer_details.dart';
@@ -57,7 +58,7 @@ class _DriversPageState extends State<DriversPage> {
 
       // Получаем уникальные города
       List<String> citiesList = getCitiesFromGeoList(geolocationList);
-
+      citiesList.remove('Город не указан');
       // Получаем пользователей
       final userDetails = <String, UserModel>{};
       for (var deliverer in deliverers) {
@@ -66,10 +67,10 @@ class _DriversPageState extends State<DriversPage> {
       }
 
       setState(() {
-        cities = citiesList; // Устанавливаем список городов
+        cities = citiesList;
         _users = userDetails;
-        _allDeliverers = deliverers; // Сохраняем всех водовозов
-        _filteredDeliverers = deliverers; // По умолчанию показываем всех
+        _allDeliverers = deliverers;
+        _filteredDeliverers = deliverers;
       });
     } catch (e) {
       print('Error fetching deliverers: $e');
@@ -94,15 +95,10 @@ class _DriversPageState extends State<DriversPage> {
                 phone.contains(searchQueryLower) ||
                 city.contains(searchQueryLower)) &&
             (_selectedCity == 'Все города' ||
-                city.contains(_selectedCity!.toLowerCase()));
+                city.contains(
+                  _selectedCity!.toLowerCase(),
+                ));
       }).toList();
-    });
-  }
-
-  void _onCitySelected(String? selectedCity) {
-    setState(() {
-      _selectedCity = selectedCity;
-      _filterDeliverers('');
     });
   }
 
@@ -117,7 +113,7 @@ class _DriversPageState extends State<DriversPage> {
     return Scaffold(
       drawer: getDrawer(context),
       appBar: AppBar(
-        title: const Text('Заявки водовозов'),
+        title: const Text('Водовозы'),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
@@ -128,15 +124,15 @@ class _DriversPageState extends State<DriversPage> {
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
               SizedBox(height: 15.h),
-              DropdownButton<String?>(
-                value: _selectedCity,
-                items: cities.map((String? city) {
-                  return DropdownMenuItem<String?>(
-                    value: city,
-                    child: Text(city ?? 'Неизвестный город'),
-                  );
-                }).toList(),
-                onChanged: _onCitySelected,
+              CityDropdownSearch(
+                cities: cities,
+                selectedCity: _selectedCity,
+                onCitySelected: (String? city) {
+                  setState(() {
+                    _selectedCity = city;
+                    _filterDeliverers('');
+                  });
+                },
               ),
 
               SizedBox(height: 15.h),

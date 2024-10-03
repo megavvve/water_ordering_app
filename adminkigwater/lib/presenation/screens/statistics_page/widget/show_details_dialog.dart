@@ -48,8 +48,8 @@ void showDetailsDialog(
               children: [
                 if (title == 'Заказы') ...[
                   AllOrdersTab(orders: orders),
-                  OrdersByClientsTab(orders: orders),
-                  OrdersBySuppliersTab(orders: orders),
+                  ActiveOrdersByClientsTab(orders: orders),
+                  CompletedOrdersBySuppliersTab(orders: orders),
                   OrdersByCanceledTab(orders: orders), // Добавляем вкладку для отмененных заказов
                 ] else if (title == 'Пользователи') ...[
                   AllUsersTab(users: users),

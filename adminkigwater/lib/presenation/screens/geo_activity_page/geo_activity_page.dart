@@ -1,6 +1,7 @@
 import 'package:adminkigwater/data/datasources/local/excel_servise.dart';
 import 'package:adminkigwater/domain/repositories/order_repository.dart';
 import 'package:adminkigwater/presenation/screens/geo_activity_page/widgets/order_details_page.dart';
+import 'package:adminkigwater/presenation/widgets/city_dropdown_search.dart';
 import 'package:adminkigwater/presenation/widgets/get_cities_from_geo_list.dart';
 import 'package:adminkigwater/presenation/widgets/navigation/drawer.dart';
 import 'package:adminkigwater/presenation/widgets/export_button.dart';
@@ -27,7 +28,7 @@ class _GeoActivityPageState extends State<GeoActivityPage> {
   List<Geolocation> orderGeolocations = [];
   List<UserModel> users = [];
   List<String?> cities = [];
-  String? selectedCity = 'Все города';
+  String? _selectedCity = 'Все города';
   DateTime? startDate;
   DateTime? endDate;
 
@@ -79,8 +80,8 @@ class _GeoActivityPageState extends State<GeoActivityPage> {
         geolocation = null;
       }
 
-      final cityMatches = selectedCity == 'Все города' ||
-          (geolocation != null && geolocation.address.contains(selectedCity!));
+      final cityMatches = _selectedCity == 'Все города' ||
+          (geolocation != null && geolocation.address.contains(_selectedCity!));
       final orderDate = DateFormat('yyyy-MM-dd').parse(order.createdAt);
       final dateMatches =
           (startDate == null || orderDate.isAfter(startDate!)) &&
@@ -107,9 +108,18 @@ class _GeoActivityPageState extends State<GeoActivityPage> {
           crossAxisAlignment: CrossAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Кнопка для экспорта
+              CityDropdownSearch(
+                cities: cities,
+                selectedCity: _selectedCity,
+                onCitySelected: (String? city) {
+                setState(() {
+                  _selectedCity = city;
+                });
+              },
+              ),
+            SizedBox(height: 15.h),
             ExportButton(
-              buttonText: 'Выгрузить статистику по : $selectedCity',
+              buttonText: 'Выгрузить статистику по : $_selectedCity',
               onExport: () {
                 getIt<ExcelService>()
                     .exportOrdersByLocationReport(filteredOrders);
@@ -122,28 +132,7 @@ class _GeoActivityPageState extends State<GeoActivityPage> {
             ),
             SizedBox(height: 15.h),
 
-            // Выбор города
-            SizedBox(
-              width: 400.w,
-              child: DropdownButton<String?>(
-                value: selectedCity,
-                items: cities.map((String? city) {
-                  return DropdownMenuItem<String?>(
-                    value: city,
-                    child: Text(city!),
-                  );
-                }).toList(),
-                onChanged: (String? newValue) {
-                  setState(() {
-                    selectedCity = newValue!;
-                  });
-                },
-                hint: const Text("Выберите город"),
-                isExpanded: true,
-                icon: const Icon(Icons.keyboard_arrow_down, color: Colors.teal),
-              ),
-            ),
-            SizedBox(height: 10.h),
+          
 
             // Выбор периода
             Row(
@@ -226,7 +215,6 @@ class _GeoActivityPageState extends State<GeoActivityPage> {
                                   : Colors.orange,
                             ),
                             onTap: () {
-                              // Переход на страницу с полной информацией о заказе
                               showDialog(
                                   context: context,
                                   builder: (BuildContext context) {

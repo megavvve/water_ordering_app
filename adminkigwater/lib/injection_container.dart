@@ -11,7 +11,7 @@ import 'package:adminkigwater/domain/usecases/get_deliverer_by_id.dart';
 import 'package:adminkigwater/domain/usecases/get_deliverers_use_case.dart';
 import 'package:adminkigwater/domain/usecases/get_user_by_id.dart';
 import 'package:adminkigwater/domain/usecases/get_users_use_case.dart';
-import 'package:adminkigwater/domain/usecases/updateAdmin.dart';
+import 'package:adminkigwater/domain/usecases/update_admin.dart';
 import 'package:adminkigwater/domain/usecases/update_deliverer_use_case.dart';
 import 'package:adminkigwater/domain/usecases/update_user_use_case.dart';
 import 'package:get_it/get_it.dart';

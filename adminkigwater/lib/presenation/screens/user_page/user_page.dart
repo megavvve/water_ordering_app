@@ -6,6 +6,7 @@ import 'package:adminkigwater/domain/repositories/geolocation_repository.dart';
 import 'package:adminkigwater/domain/usecases/get_users_use_case.dart';
 import 'package:adminkigwater/domain/usecases/update_user_use_case.dart';
 import 'package:adminkigwater/injection_container.dart';
+import 'package:adminkigwater/presenation/widgets/city_dropdown_search.dart';
 import 'package:adminkigwater/presenation/widgets/get_cities_from_geo_list.dart';
 import 'package:adminkigwater/presenation/widgets/navigation/drawer.dart';
 import 'package:adminkigwater/presenation/screens/user_page/widgets/edit_user_dialog.dart';
@@ -30,7 +31,8 @@ class _UsersPageState extends State<UsersPage> {
   List<Geolocation?> _filteredGeolocations = [];
   String _searchQuery = "";
   String? _selectedCity;
-  bool isCitySelected = false; // Новый флаг для отслеживания, выбран ли город
+  List<String> cities = [];
+  bool isCitySelected = false;
   final AuthRepository authRepository = getIt<AuthRepository>();
 
   @override
@@ -51,6 +53,7 @@ class _UsersPageState extends State<UsersPage> {
         allGeolocations = geolocations;
         _filteredUsers = users;
         _filteredGeolocations = geolocations;
+         cities = getCitiesFromGeoList(allGeolocations);
       });
     } catch (e) {
       print('Error fetching users: $e');
@@ -134,94 +137,73 @@ class _UsersPageState extends State<UsersPage> {
 
   @override
   Widget build(BuildContext context) {
-    List<String> cities = getCitiesFromGeoList(allGeolocations);
-
-  
-
-  
-    if (!isCitySelected) {
-      return Scaffold(
-        body: Center(
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 20.w),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Text(
-                  'Выберите город',
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                ),
-                SizedBox(height: 20.h),
-                DropdownButton<String>(
-                  hint: const Text('Выберите город'),
-                  value: _selectedCity,
-                  onChanged: _onCitySelected,
-                  items: cities
-                      .map((city) => DropdownMenuItem<String>(
-                            value: city == 'Все города' ? null : city,
-                            child: Text(city ),
-                          ))
-                      .toList(),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
-
-    // После выбора города возвращаем привычный интерфейс
+   
     return Scaffold(
       drawer: getDrawer(context),
       appBar: AppBar(
         title: const Text('Пользователи'),
         centerTitle: true,
       ),
-      body: Column(
-        mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          SizedBox(height: 15.h),
-          DropdownButton<String>(
-            hint: const Text('Выберите город'),
-            value: _selectedCity,
-            onChanged: _onCitySelected,
-            items: cities
-                .map((city) => DropdownMenuItem<String>(
-                      value: city == 'Все города' ? null : city,
-                      child: Text(city ),
-                    ))
-                .toList(),
-          ),
-          ExportButton(
-            buttonText: _selectedCity == null
-                ? 'Выгрузить статистику по всем пользователям'
-                : 'Выгрузить статистику по городу: $_selectedCity',
-            onExport: _onExport,
-          ),
-          SearchWidget(onSearch: _onSearch),
-          Padding(
-            padding: EdgeInsets.only(right: 295.w),
-            child: const UserListHeader(),
-          ),
-          Expanded(
-            child: _filteredUsers.isNotEmpty
-                ? UserListWidget(
-                    users: _filteredUsers,
-                    geolocations: _filteredGeolocations,
-                    onEditUser: _onEditUser,
-                  )
-                : (_allUsers.isNotEmpty
-                    ? const Center(
-                        child: Text('Пользователи не найдены'),
-                      )
-                    : const Center(
-                        child: CircularProgressIndicator(),
-                      )),
-          ),
-        ],
-      ),
+      body: !isCitySelected
+          ? Center(
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20.w),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text(
+                      'Выберите город',
+                      style:
+                          TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                    ),
+                    SizedBox(height: 20.h),
+                    CityDropdownSearch(
+                      cities: cities,
+                      selectedCity: _selectedCity,
+                      onCitySelected: _onCitySelected,
+                    ),
+                  ],
+                ),
+              ),
+            )
+          : Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                SizedBox(height: 15.h),
+                CityDropdownSearch(
+                    cities: cities,
+                    selectedCity: _selectedCity,
+                    onCitySelected: _onCitySelected),
+                ExportButton(
+                  buttonText: _selectedCity == null
+                      ? 'Выгрузить статистику по всем пользователям'
+                      : 'Выгрузить статистику по городу: $_selectedCity',
+                  onExport: _onExport,
+                ),
+                SearchWidget(onSearch: _onSearch),
+                Padding(
+                  padding: EdgeInsets.only(right: 295.w),
+                  child: const UserListHeader(),
+                ),
+                Expanded(
+                  child: _filteredUsers.isNotEmpty
+                      ? UserListWidget(
+                          users: _filteredUsers,
+                          geolocations: _filteredGeolocations,
+                          onEditUser: _onEditUser,
+                        )
+                      : (_allUsers.isNotEmpty
+                          ? const Center(
+                              child: Text('Пользователи не найдены'),
+                            )
+                          : const Center(
+                              child: CircularProgressIndicator(),
+                            )),
+                ),
+              ],
+            ),
     );
   }
 }

@@ -30,7 +30,7 @@ Widget buildStatisticsCard({
                       Icon(_getIconForStat(entry.key), size: 20.sp),
                       SizedBox(width: 10.sp),
                       Text('${entry.key}: ${entry.value}',
-                          style: TextStyle(fontSize: 16.sp)),
+                          style: TextStyle(fontSize: 16.sp,),),
                     ],
                   ),
                 ),

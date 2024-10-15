@@ -39,14 +39,25 @@ class OrderRepositoryImpl implements OrderRepository {
   @override
   Future<List<Order>> getOrders() async {
     final response = await database.listDocuments(
-      databaseId: dbId,
-      collectionId: ordersCollectionId,
-      queries: [Query.limit(100)]
-    );
+        databaseId: dbId,
+        collectionId: ordersCollectionId,
+        queries: [Query.limit(5000)]);
     List<Order> ordersCollectionIdList = [];
     for (Document element in response.documents) {
-      final order = Order.fromMap(element.data);
+      DateTime givenDateTime = DateTime.parse(element.$updatedAt);
+      DateTime now = DateTime.now();
+      Duration difference = now.difference(givenDateTime);
 
+      final order = Order.fromMap(element.data);
+      if (difference.inDays > 1) {
+        if (order.status == OrderStatus.pending.name ||
+            order.status == OrderStatus.awaitingConfirmation.name ||
+            order.status == OrderStatus.accepted.name) {
+          order.status = 'canceled';
+          await updateOrder(order);      
+        print('Разница больше одного дня у заказа, поэтому он стал canceled');
+        }
+      }
       ordersCollectionIdList.add(order);
     }
     return ordersCollectionIdList;

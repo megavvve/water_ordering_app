@@ -96,98 +96,68 @@ class AuthRepositotyImpl extends AuthRepository {
     }
   }
 
-  @override
-  Future<User?> signInWithGoogle() async {
-    try {
-      // Создание сессии через Google OAuth
-      await account.createOAuth2Session(
-        provider: OAuthProvider.google,
-        scopes: ['email', 'profile', 'phone'],
-      );
+ @override
+Future<User?> signInWithGoogle() async {
+  try {
+    // Инициализация OAuth с Google
+    await account.createOAuth2Session(
+      provider: OAuthProvider.google,  // Используем строку 'google' вместо OAuthProvider.google
+      scopes: ['email', 'profile', 'phone'], // Указываем запрашиваемые доступы
+    );
 
-      // Задержка для завершения входа (можно удалить, если не требуется)
-      await Future.delayed(const Duration(milliseconds: 500));
+    // Получаем текущую сессию пользователя
+    var session = await account.getSession(sessionId: 'current'); // Используем 'current', чтобы получить текущую сессию
+    print('Провайдер: ${session.provider}');
+    print('UID провайдера: ${session.providerUid}');
+    print('Токен доступа: ${session.providerAccessToken}');
+    
+    // Получение информации о текущем пользователе
+    var user = await account.get();
+    print(user);
 
-      // Получение информации о текущем пользователе
-      var user = await account.get();
-      print(user);
-
-      return user; // Возвращаем пользователя
-    } on AppwriteException catch (e) {
-      print('Ошибка при входе через Google: $e');
-      return null; // В случае ошибки возвращаем null
-    }
+    return user; // Возвращаем пользователя
+  } on AppwriteException catch (e) {
+    print('Ошибка при входе через Google: $e');
+    return null; // В случае ошибки возвращаем null
   }
+}
+
 
   bool _isValidCode(String code) {
     final regex = RegExp(r'^\d{6}$');
     return regex.hasMatch(code);
   }
 
-  // @override
-  // Future<String> signUpUsingPhoneNumber(String phone) async {
-  //   String userId = await checkPhoneNumber(phoneno: phone);
-  //   if (userId == "user_not_exist") {
-  //     userId = ID.unique();
-  //   }
+ @override 
+Future<String> signUpUsingPhoneNumber(String phone) async {
+  try {
+    final userId = await checkPhoneNumber(phoneno: phone);
 
-  //   const int maxRetries = 5;
-  //   int attempt = 0;
-  //   while (attempt < maxRetries) {
-  //     try {
-  //       final sessionToken =
-  //           await account.createPhoneToken(userId: userId, phone: phone);
+    if (userId == "user_not_exist") {
+      // Создание нового пользователя с уникальным ID
+      final Token data = await account.createPhoneToken(
+        userId: ID.unique(), // Уникальный ID для нового пользователя
+        phone: phone,
+      );
 
-  //       if (sessionToken.secret.isNotEmpty) {
-  //         print(sessionToken.expire);
-  //         print(sessionToken.phrase);
-  //         print(sessionToken.secret);
-  //         print(sessionToken.userId);
-  //         print(sessionToken.$id);
-  //         return sessionToken.userId;
-  //       }
-  //     } on AppwriteException catch (e) {
-  //       if (e.code == 429) {
-  //         // Rate limit exceeded
-  //         print(
-  //           "Rate limit exceeded, waiting before retry...",
-  //         );
-  //         print(e);
-  //         await Future.delayed(
-  //             const Duration(seconds: 10)); // Wait 10 seconds before retrying
-  //       } else {
-  //         print("Ошибка отправки: ${e.message}");
-  //         return ''; // Return immediately if the error is not related to rate limiting
-  //       }
-  //     }
-  //     attempt++;
-  //   }
+      // Сохранение нового пользователя в локальные данные
+      LocalSavedData().saveUserPhone(phone);
 
-  //   return '';
-  // }
-  @override
-  Future<String> signUpUsingPhoneNumber(String phone) async {
-    try {
-      final userId = await checkPhoneNumber(phoneno: phone);
-      if (userId == "user_not_exist") {
-        // creating a new account
-        final Token data =
-            await account.createPhoneToken(userId: ID.unique(), phone: phone);
+      return data.userId;  // Возвращаем userId нового пользователя
+    } else {
+      // Создание нового токена для существующего пользователя
+      final Token data = await account.createPhoneToken(
+        userId: userId,  // Используем существующий userId
+        phone: phone,
+      );
 
-        // save the new user to user collection
-        LocalSavedData().saveUserPhone(phone);
-
-        return data.userId;
-      } else {
-        // create phone token for existing user
-        final Token data =
-            await account.createPhoneToken(userId: userId, phone: phone);
-
-        return data.userId;
-      }
-    } catch (e) {
-      print("error on create phone session :$e");
-      return "login_error";
+      return data.userId;  // Возвращаем userId существующего пользователя
     }
+  } catch (e) {
+    print("error on create phone session :$e");
+      
+    return "login_error"; // Возвращаем ошибку
   }
+}
+
 }

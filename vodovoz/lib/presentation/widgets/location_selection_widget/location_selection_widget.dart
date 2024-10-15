@@ -13,9 +13,9 @@ class LocationSelectionWidget extends StatefulWidget {
   const LocationSelectionWidget({
     required this.onLocationSelected,
     this.initialAddress,
-    Key? key,
+    super.key,
     required this.labelText,
-  }) : super(key: key);
+  });
 
   @override
   _LocationSelectionWidgetState createState() =>
@@ -71,7 +71,7 @@ class _LocationSelectionWidgetState extends State<LocationSelectionWidget> {
     return GestureDetector(
       onTap: _openAddressInput,
       child: Padding(
-        padding: EdgeInsets.all(10.sp),
+        padding: EdgeInsets.all(5.sp),
         child: SizedBox(
           width: 300.w,
           child: TextField(
@@ -93,7 +93,6 @@ class _LocationSelectionWidgetState extends State<LocationSelectionWidget> {
               labelStyle:
                   TextStyle(color: isProfile ? Colors.white : Colors.grey),
             ),
-            // Вызовем функцию _openAddressInput при нажатии на TextField
             onTap: _openAddressInput,
           ),
         ),

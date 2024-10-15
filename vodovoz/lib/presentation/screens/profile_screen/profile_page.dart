@@ -98,8 +98,7 @@ class _ProfilePageState extends State<ProfilePage> {
       if (fileId != '') {
         f.File? imageFile = await storageRepo.getAvatar(fileId ?? '', userId);
 
-        // Проверяем, что виджет всё ещё смонтирован
-        if (!mounted) return;
+      
 
         setState(() {
           _image = imageFile;
@@ -160,7 +159,7 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> _pickImage() async {
-    final picker = ImagePicker();
+    ImagePicker  picker = ImagePicker();
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -184,7 +183,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           fontSize: 20.sp, fontWeight: FontWeight.w400),
                     ),
                     onTap: () async {
-                      final pickedFile =
+                      XFile? pickedFile =
                           await picker.pickImage(source: ImageSource.gallery);
                       if (pickedFile != null) {
                         setState(() {
@@ -207,7 +206,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           fontSize: 20.sp, fontWeight: FontWeight.w400),
                     ),
                     onTap: () async {
-                      final pickedFile =
+                      XFile? pickedFile =
                           await picker.pickImage(source: ImageSource.camera);
                       if (pickedFile != null) {
                         setState(() {

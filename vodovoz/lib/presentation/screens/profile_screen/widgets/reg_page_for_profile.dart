@@ -137,7 +137,12 @@ class _RegPageForProfileState extends State<RegPageForProfile> {
                             SetPageWithoutBack(context, 'profile');
                           } else {
                             ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text("Login Failed")));
+                              const SnackBar(
+                                content: Text(
+                                  "Login Failed",
+                                ),
+                              ),
+                            );
                           }
                         } catch (e) {
                           showError('Ошибка подтверждения кода', context);

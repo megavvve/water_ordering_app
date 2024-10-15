@@ -47,8 +47,15 @@ class ActiveDeliveryProvider extends ChangeNotifier {
 
   // Удаление доставщика
   void removeDeliverer(String delivererId) {
-    _deliverers.removeWhere((deliverer) => deliverer.userId == delivererId);
-    _geolocations.removeWhere((geo) => geo.geolocationId == delivererId);
+    try {
+      _deliverers.removeWhere((deliverer) => deliverer.userId == delivererId);
+      _geolocations.removeWhere((geo) => geo.geolocationId == delivererId);
+      print('deliverers:$_deliverers');
+      print('_geolocations:$_geolocations');
+    } catch (e) {
+      print('Exception where remove deliverer:$e');
+    }
+
     notifyListeners();
   }
 

@@ -115,7 +115,6 @@ class AppWrite {
           final firstItem = data.events[0].split(".");
           final eventType = firstItem[firstItem.length - 1];
 
-          // Проверяем, произошло ли обновление или создание
           if (eventType == "update" || eventType == "create") {
             final delivererData = data.payload;
 
@@ -148,7 +147,6 @@ class AppWrite {
                 }
               }
             }
-            // Преобразуем данные в объект Deliverer и вызываем callback
           }
         });
       } else {

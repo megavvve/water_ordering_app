@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -5,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 import 'package:vodovoz/data/datasources/local/local_saved_data.dart';
 import 'package:vodovoz/data/datasources/remote/appwrite.dart';
 import 'package:vodovoz/data/datasources/remote/push_notifications.dart';
@@ -18,6 +20,7 @@ import 'package:vodovoz/presentation/providers/order_user_bloc/order_user_bloc.d
 import 'package:vodovoz/presentation/screens/driver/order_details/order_details_page.dart';
 import 'package:vodovoz/presentation/screens/order_water/order_accept_page/order_accept_page.dart';
 import 'package:vodovoz/presentation/screens/registration/sign_in_selection_page.dart';
+import 'package:vodovoz/presentation/widgets/build_no_connection_overlay.dart';
 import 'package:vodovoz/presentation/widgets/enums/user_type.dart';
 import 'package:vodovoz/presentation/widgets/navigation/set_page.dart';
 import 'package:vodovoz/presentation/screens/order_water/order_redirect_page.dart';
@@ -39,7 +42,7 @@ Future<void> main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
   await setupLocator();
-  
+
   // await AppWrite().getAccount().deleteSession(sessionId: 'current');
   // getIt<LocalSavedData>().clearAllData();
 
@@ -60,74 +63,87 @@ Future<void> main() async {
 
 class MyApp extends StatefulWidget {
   const MyApp({
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   @override
   State<MyApp> createState() => _MyAppState();
 }
 
 class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
+  late final StreamSubscription<InternetStatus> _subscription;
+  bool _isInternetConnected = true;
+
   @override
   void initState() {
     super.initState();
+    _subscription =
+        InternetConnection().onStatusChange.listen((InternetStatus status) {
+      switch (status) {
+        case InternetStatus.connected:
+          setState(() {
+            _isInternetConnected = true;
+          });
+          break;
+        case InternetStatus.disconnected:
+          setState(() {
+            _isInternetConnected = false;
+          });
+          break;
+      }
+    });
     WidgetsBinding.instance.addObserver(this);
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _subscription.cancel();
     super.dispose();
   }
 
   @override
   Future<void> didChangeAppLifecycleState(AppLifecycleState state) async {
     super.didChangeAppLifecycleState(state);
+
+    print('App Lifecycle State changed: $state');
+
     try {
       await getIt<AppWrite>().getAccount().get();
-      //await AppWrite().getAccount().get();
 
       if (state == AppLifecycleState.detached) {
+        print('App is being closed or detached.');
         final userId = LocalSavedData().getUserId();
         if (userId.isNotEmpty) {
           final user = await getIt<GetUserById>().call(userId);
           final deliverer = await getIt<GetDelivererById>().call(userId);
+
           if (user != null) {
-            getIt<UpdateUser>().call(
-              user.copyWith(
-                isOnline: false,
-              ),
+            await getIt<UpdateUser>().call(
+              user.copyWith(isOnline: false),
             );
           }
+
           if (deliverer != null) {
-            getIt<DelivererRepository>().updateDeliverer(
-              deliverer.copyWith(
-                isAvailable: false,
-          
-              ),
+            await getIt<DelivererRepository>().updateDeliverer(
+              deliverer.copyWith(isAvailable: false),
             );
           }
         }
-
-        // Приложение свернуто или закрыто
-        print("Приложение свернуто или закрыто");
-        // Здесь можно выполнить нужное действие, например, сохранить данные
       } else if (state == AppLifecycleState.resumed) {
+        print('App is resumed.');
         final userId = LocalSavedData().getUserId();
         if (userId.isNotEmpty) {
           final user = await getIt<GetUserById>().call(userId);
           if (user != null) {
-            getIt<UpdateUser>().call(
-              user.copyWith(
-                isOnline: true,
-              ),
+            await getIt<UpdateUser>().call(
+              user.copyWith(isOnline: true),
             );
           }
         }
-        print("Приложение снова активно");
       }
     } catch (e) {
-      print('не получилось()');
+      print('Error in didChangeAppLifecycleState: $e');
     }
   }
 
@@ -177,6 +193,12 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
               useMaterial3: true,
             ),
             initialRoute: 'home',
+            builder: (context, child) {
+              if (!_isInternetConnected) {
+                return buildNoConnectionOverlay(child!, context);
+              }
+              return child!;
+            },
           );
         },
       ),
@@ -184,8 +206,15 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   }
 }
 
-class MyHomePage extends StatelessWidget {
-  const MyHomePage({Key? key}) : super(key: key);
+class MyHomePage extends StatefulWidget {
+  const MyHomePage({super.key});
+
+  @override
+  State<MyHomePage> createState() => _MyHomePageState();
+}
+
+class _MyHomePageState extends State<MyHomePage> {
+  final localSavedData = getIt<LocalSavedData>();
 
   @override
   Widget build(BuildContext context) {
@@ -220,48 +249,59 @@ class MyHomePage extends StatelessWidget {
               Padding(
                 padding: EdgeInsets.symmetric(vertical: 40.h, horizontal: 20.w),
                 child: SizedBox(
-                    height: 60.h,
-                    width: 300.w,
-                    child: Builder(
-                      builder: (context) {
-                        return FilledButton(
-                          onPressed: () async {
-                            String initialRoute = 'profile';
-                            try {
-                              await getIt<AppWrite>().getAccount().get();
-                            
-                              final userId = LocalSavedData().getUserId();
-                              final user = await getIt<GetUserById>().call(
-                                userId,
-                              );
+                  height: 60.h,
+                  width: 300.w,
+                  child: Builder(
+                    builder: (context) {
+                      return FilledButton(
+                        onPressed: () async {
+                          String initialRoute = 'profile';
+                          try {
+                            await getIt<AppWrite>().getAccount().get();
 
-                              if (user != null) {
-                                initialRoute = 'orderingRedirect';
-                                if (user.userType == UserType.deliverer.name) {
-                                  final deliverer =
-                                      await getIt<GetDelivererById>().call(
-                                    LocalSavedData().getUserId(),
-                                  );
-                                  if (deliverer?.isAvailable == true&& deliverer!.waterType.isNotEmpty) {
-                                    initialRoute = 'line';
-                                  } else {
-                                    initialRoute = 'delivery';
-                                  }
+                            final userId = localSavedData.getUserId();
+                            final user = await getIt<GetUserById>().call(
+                              userId,
+                            );
+
+                            if (user != null) {
+                              initialRoute = 'orderingRedirect';
+                              if (user.userType == UserType.deliverer.name) {
+                                final deliverer =
+                                    await getIt<GetDelivererById>().call(
+                                  localSavedData.getUserId(),
+                                );
+
+                                if (deliverer?.isAvailable == true &&
+                                    deliverer!.waterType.isNotEmpty) {
+                                  initialRoute = 'line';
+                                } else {
+                                  initialRoute = 'delivery';
                                 }
+                                localSavedData.saveIsUserIsDeliverer(true);
                               }
-                            } catch (err) {
-                              print(err);
-                              initialRoute = 'signInSelection';
                             }
+                          } catch (err) {
+                            print(err);
+                            try {
+                              await getIt<GetDelivererById>().call(
+                                localSavedData.getUserId(),
+                              );
+                              localSavedData.saveIsUserIsDeliverer(true);
+                            } catch (e) {
+                              localSavedData.saveIsUserIsDeliverer(false);
+                            }
+                            initialRoute = 'signInSelection';
+                          }
 
-                          
-                            SetPageWithoutBack(context, initialRoute);
-                          },
-                          style: btnStl,
-                          child: const Text('Начать'),
-                        );
-                      },
-                    )),
+                          SetPageWithoutBack(context, initialRoute);
+                        },
+                        style: btnStl,
+                        child: const Text('Начать'),
+                      );
+                    },
+                  ),
+                ),
               ),
             ],
           ),

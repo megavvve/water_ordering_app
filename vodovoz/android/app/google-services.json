@@ -1,6 +1,7 @@
 {
   "project_info": {
     "project_number": "100628826907",
+    "firebase_url": "https://vodovoz-1688a-default-rtdb.europe-west1.firebasedatabase.app",
     "project_id": "vodovoz-1688a",
     "storage_bucket": "vodovoz-1688a.appspot.com"
   },
@@ -35,7 +36,7 @@
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "100628826907-917g1vgqor5a8bigs9d62bhn5qej1q41.apps.googleusercontent.com",
+              "client_id": "100628826907-8apqlsdg6atfur0btdfgo7r4hh516jnp.apps.googleusercontent.com",
               "client_type": 3
             },
             {

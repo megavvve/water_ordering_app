@@ -18,34 +18,34 @@ void showCompletionDialog(
   showDialog(
     context: context,
     builder: (BuildContext context) {
-      double rating = 0;
+      double _rating = 0.0;
 
       return AlertDialog(
         title: const Text('Оцените заказ'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
+             Text(
               'Пожалуйста, оцените заказ:',
               style: TextStyle(
-                fontSize: 18,
+                fontSize: 18.sp,
                 fontWeight: FontWeight.w500,
               ),
             ),
             SizedBox(height: 16.0.h),
             RatingBar.builder(
-              initialRating: 0,
-              minRating: 1,
+              initialRating: 0.0,
+              minRating: 1.0,
               direction: Axis.horizontal,
               allowHalfRating: true,
               itemCount: 5,
-              itemPadding: const EdgeInsets.symmetric(horizontal: 4.0),
+              itemPadding:  EdgeInsets.symmetric(horizontal: 4.0.w),
               itemBuilder: (context, _) => const Icon(
                 Icons.star,
                 color: Colors.amber,
               ),
               onRatingUpdate: (rating) {
-                rating = rating;
+                _rating = rating;
               },
             ),
             SizedBox(height: 16.0.h),
@@ -64,11 +64,11 @@ void showCompletionDialog(
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text(
+            child:  Text(
               'Отмена',
               style: TextStyle(
                 color: Colors.redAccent,
-                fontSize: 16,
+                fontSize: 16.sp,
               ),
             ),
           ),
@@ -82,21 +82,22 @@ void showCompletionDialog(
                     toWhomUserId: order.customerId,
                     fromWhomUserId: order.delivererId,
                     orderId: order.id,
-                    rating: rating,
+                    rating: _rating,
                     isDeliverer: false,
                     comment: commentController.text,
                     date: dateTimeCorrectForm,
+                    isReviewForCanceledOrder: false
                   ),
                 ),
               );
               _updateDelivererAvailability(order.delivererId);
               Navigator.of(context).pop();
             },
-            child: const Text(
+            child:  Text(
               'Отправить',
               style: TextStyle(
                 color: Colors.blueAccent,
-                fontSize: 16,
+                fontSize: 16.sp,
               ),
             ),
           ),
@@ -110,5 +111,6 @@ Future<void> _updateDelivererAvailability(String delivererId) async {
   final deliverer = await getIt<GetDelivererById>().call(delivererId);
   if (deliverer != null) {
     deliverer.isAvailable = false;
+    deliverer.waterType = '';
   }
 }

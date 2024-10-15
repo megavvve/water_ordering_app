@@ -10,18 +10,22 @@ import 'package:vodovoz/domain/entities/deliverer.dart';
 import 'package:vodovoz/domain/entities/order.dart';
 import 'package:vodovoz/domain/repositories/deliverer_repository.dart';
 import 'package:vodovoz/domain/repositories/geolocation_repository.dart';
+import 'package:vodovoz/domain/repositories/order_repository.dart';
+import 'package:vodovoz/domain/repositories/user/user_repository.dart';
 import 'package:vodovoz/injection_container.dart';
 import 'package:vodovoz/presentation/providers/delivery_order_bloc/deliverer_order_bloc.dart';
 import 'package:vodovoz/presentation/screens/driver/line_order_screen/widgets/order_card.dart';
 import 'package:vodovoz/presentation/screens/driver/line_order_screen/widgets/show_cancel_dialogue.dart';
+import 'package:vodovoz/presentation/widgets/enums/user_type.dart';
 import 'package:vodovoz/presentation/widgets/navigation/drawer.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:vodovoz/presentation/widgets/navigation/set_page.dart';
 
 import 'package:geolocator/geolocator.dart';
+import 'package:vodovoz/utils/constants.dart';
 
 class LineOrderPage extends StatefulWidget {
-  const LineOrderPage({Key? key}) : super(key: key);
+  const LineOrderPage({super.key});
 
   @override
   _LineOrderPageState createState() => _LineOrderPageState();
@@ -32,21 +36,30 @@ class _LineOrderPageState extends State<LineOrderPage> {
   final AppWrite appWriteService = getIt<AppWrite>();
   final GeolocationRepository geolocationRepository =
       getIt<GeolocationRepository>();
-
+  final delivererRepo = getIt<DelivererRepository>();
   late StreamSubscription<Position> positionStreamSubscription;
-  double searchRadiusInKm = 10.0; // Радиус поиска по умолчанию
+  final userRepo = getIt<UserRepository>();
+  double searchRadiusInKm = constantInitRadiusToFindOrdersByDeliverers; 
 
   @override
   void initState() {
     super.initState();
 
-    // Check and request location permissions
     _checkPermissions();
 
     appWriteService.subscribeToRealtimeForDelivererLoadOrders(
         onUpdate: _handleRealtimeUpdate);
 
     delivererOrderBloc = getIt<DelivererOrderBloc>()..add(LoadOrders());
+    _updateUSerNameONDeliverer();
+  }
+
+  Future<void> _updateUSerNameONDeliverer() async {
+    final deliverer = await userRepo.getUserById(LocalSavedData().getUserId());
+    if (deliverer != null) {
+      userRepo
+          .updateUser(deliverer.copyWith(userType: UserType.deliverer.name));
+    }
   }
 
   Future<void> _checkPermissions() async {
@@ -55,7 +68,7 @@ class _LineOrderPageState extends State<LineOrderPage> {
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
-        // Handle permission denied scenario
+     
         _showPermissionDeniedMessage();
         return;
       }
@@ -253,7 +266,6 @@ class _LineOrderPageState extends State<LineOrderPage> {
                                         sliver: SliverList(
                                           delegate: SliverChildBuilderDelegate(
                                             (context, index) {
-
                                               Order order = nearbyOrders[index];
                                               return Padding(
                                                 padding: EdgeInsets.symmetric(
@@ -276,9 +288,7 @@ class _LineOrderPageState extends State<LineOrderPage> {
                                                           String status) async {
                                                         delivererOrderBloc.add(
                                                           RejectPendingOrder(
-                                                            order
-                                                            
-                                                          ),
+                                                              order),
                                                         );
                                                       },
                                                     );
@@ -305,17 +315,51 @@ class _LineOrderPageState extends State<LineOrderPage> {
                             );
                           } else {
                             return const Center(
-                                child: Text('Не удалось определить позицию'));
+                              child: Text(
+                                'Не удалось определить позицию',
+                              ),
+                            );
                           }
                         },
                       );
+                    } else if (state is OrderCanceled) {
+                      final canceledOrder = state.order;
+
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                           Navigator.of(context);
+                        SetPageWithoutBack(context, 'delivery');
+
+                        // Показываем всплывающее окно с информацией об отменённом заказе
+                        showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return AlertDialog(
+                              title: Text('Заказ отменён'),
+                              content: Text(
+                                  'Заказ под номером: ${canceledOrder.id.hashCode} был отменён пользователем.'),
+                              actions: <Widget>[
+                                TextButton(
+                                  onPressed: () {
+                                    Navigator.of(context)
+                                        .pop(); // Закрыть диалог
+                                  },
+                                  child: Text('Закрыть'),
+                                ),
+                              ],
+                            );
+                          },
+                        );
+
+                        // Обновляем статус завершенности заказа
+                        getIt<OrderRepository>().updateOrder(
+                          canceledOrder.copyWith(
+                            isFinish: true,
+                          ),
+                        );
+                      });
                     }
-                    return const Center(
-                      child: Text(
-                        'Неизвестное состояние',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    );
+
+                    return const Center(child: CircularProgressIndicator());
                   },
                 ),
               ),
@@ -326,7 +370,6 @@ class _LineOrderPageState extends State<LineOrderPage> {
                   padding: EdgeInsets.zero,
                 ),
                 onPressed: () async {
-                  final delivererRepo = getIt<DelivererRepository>();
                   final Deliverer? deliverer = await delivererRepo
                       .getDeliverer(LocalSavedData().getUserId());
                   if (deliverer != null) {

@@ -9,6 +9,7 @@ import 'package:vodovoz/domain/entities/geolocation.dart';
 import 'package:vodovoz/domain/entities/user_model/user_model.dart';
 import 'package:vodovoz/domain/repositories/geolocation_repository.dart';
 import 'package:vodovoz/domain/repositories/storage_repository.dart';
+import 'package:vodovoz/domain/repositories/user/auth_repository.dart';
 
 import 'package:vodovoz/domain/repositories/user/user_repository.dart';
 import 'package:vodovoz/injection_container.dart';
@@ -97,14 +98,13 @@ class UserRepositoryImpl implements UserRepository {
           phoneNumber: phone ?? user.phoneNumber,
         );
         updateUser(user);
-        //final authRepo = getIt<AuthRepository>();
-        // Обновление данных в аккаунте Appwrite
-        if (fullName != null) {
+        final authRepo = getIt<AuthRepository>();
+        if (fullName != null && user.name != fullName) {
           await account.updateName(name: fullName);
         }
-        // if (phone != null) {
-        //   authRepo.updatePhone(user.userId, phone);
-        // }
+        if (phone != null && user.phoneNumber != phone) {
+          authRepo.updatePhone(user.userId, phone);
+        }
       }
     } catch (e) {
       print('Ошибка при сохранении профиля: $e');

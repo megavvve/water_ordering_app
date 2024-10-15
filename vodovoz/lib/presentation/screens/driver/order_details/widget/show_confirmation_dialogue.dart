@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:vodovoz/domain/entities/order.dart';
+import 'package:vodovoz/domain/repositories/order_repository.dart';
+import 'package:vodovoz/injection_container.dart';
 import 'package:vodovoz/presentation/providers/delivery_order_bloc/deliverer_order_bloc.dart';
+import 'package:vodovoz/presentation/widgets/enums/order_status.dart';
 
 void showConfirmationDialogForOrderDetails(Order order, BuildContext context) {
   showDialog(
@@ -14,19 +16,44 @@ void showConfirmationDialogForOrderDetails(Order order, BuildContext context) {
         actions: <Widget>[
           TextButton(
             child: const Text('Да'),
-            onPressed: () {
-              BlocProvider.of<DelivererOrderBloc>(context).add(
-                UpdateOrderStatus(order, 'inProgress'),
-              );
+            onPressed: () async {
+              final orderCopy =
+                  await getIt<OrderRepository>().getOrder(order.id);
+              if (orderCopy?.status != OrderStatus.canceled.name) {
+                getIt<DelivererOrderBloc>().add(
+                  UpdateOrderStatus(order, 'inProgress'),
+                );
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    backgroundColor:
+                        Colors.grey, // Set the background color to gray
+                    content: Text('Заказ был отменен и не может быть обработан.'),
+                  ),
+                );
+              }
+
               Navigator.of(context).pop();
             },
           ),
           TextButton(
             child: const Text('Нет'),
-            onPressed: () {
-              BlocProvider.of<DelivererOrderBloc>(context).add(
-                UpdateOrderStatus(order, 'pending'),
-              );
+            onPressed: () async {
+              final orderCopy =
+                  await getIt<OrderRepository>().getOrder(order.id);
+              if (orderCopy?.status != OrderStatus.canceled.name) {
+                getIt<DelivererOrderBloc>().add(
+                  UpdateOrderStatus(order, 'pending'),
+                );
+              }else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    backgroundColor:
+                        Colors.grey,
+                    content: Text('Заказ был отменен и не может быть обработан.'),
+                  ),
+                );
+              }
               Navigator.of(context).pop();
             },
           ),

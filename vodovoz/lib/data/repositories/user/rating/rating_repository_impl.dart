@@ -39,8 +39,7 @@ class RatingRepositoryImpl implements RatingRepository {
     try {
       final response = await database.listDocuments(
         databaseId: dbId,
-        collectionId: reviewsCollectionId,
-    queries: [Query.limit(5000)]
+        collectionId: ratingsCollectionId,
       );
 
       final reviews = response.documents.map((doc) {
@@ -57,7 +56,6 @@ class RatingRepositoryImpl implements RatingRepository {
     }
   }
 
- 
   @override
   Future<void> addReviewForRating({
     required Review review,
@@ -81,9 +79,7 @@ class RatingRepositoryImpl implements RatingRepository {
       );
 
       rating.reviewsId.add(review.id);
-      int numberOfRatings = reviews
-          .where((x) => x.isReviewForCanceledOrder == false && x.rating > 0)
-          .length;
+      int numberOfRatings = reviews.length;
       double currentRating =
           (review.isDeliverer) ? rating.delivererRating : rating.overallRating;
 
@@ -108,8 +104,9 @@ class RatingRepositoryImpl implements RatingRepository {
         databaseId: dbId,
       );
     } catch (e) {
+      // Обработка ошибок, можно вывести сообщение в лог или бросить исключение дальше
       print('Error adding review for rating: $e');
-      rethrow;
+      rethrow; // Если нужно, чтобы ошибка была перехвачена на более высоком уровне
     }
   }
 
@@ -134,15 +131,10 @@ class RatingRepositoryImpl implements RatingRepository {
       print('Failed to create rating: ${e.message}');
     }
   }
-   @override
-  Future<void> addReview({
-    required Review review,
-  }) async {
-   await database.createDocument(
-        collectionId: reviewsCollectionId,
-        documentId: review.id,
-        data: review.toMap(),
-        databaseId: dbId,
-      );
+  
+  @override
+  Future<void> addReview({required Review review}) {
+    // TODO: implement addReview
+    throw UnimplementedError();
   }
 }

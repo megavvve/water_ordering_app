@@ -56,3 +56,13 @@ class UpdateOrderStatus extends DelivererOrderEvent {
   @override
   List<Object> get props => [order, status];
 }
+class CancelOrder extends DelivererOrderEvent {
+  final Order order;
+  final String reason;
+
+  const CancelOrder(this.order, this.reason);
+
+  @override
+  List<Object> get props => [order, reason];
+}
+

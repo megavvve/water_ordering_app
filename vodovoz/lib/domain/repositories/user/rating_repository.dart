@@ -11,4 +11,7 @@ abstract class RatingRepository {
     required String userId,
     bool isDeliverer = false,
   });
+  Future<void> addReview({
+    required Review review,
+  });
 }

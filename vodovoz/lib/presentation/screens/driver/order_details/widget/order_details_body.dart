@@ -12,13 +12,13 @@ class OrderDetailsBody extends StatelessWidget {
   final VoidCallback onCancellationPressed;
 
   const OrderDetailsBody({
-    Key? key,
+    super.key,
     required this.order,
     required this.customer,
     required this.geolocation,
     required this.onCompletionPressed,
     required this.onCancellationPressed,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

@@ -9,7 +9,7 @@ void showCancelDialog(BuildContext context, Order order,
     builder: (context) {
       return AlertDialog(
         title: const Text('Отмена заказа'),
-        content: const Text('Вы уверены, что хотите отменить заказ?'),
+        content: const Text('Вы уверены, что не хотите брать заказ? Потом взять вы его не сможете'),
         actions: <Widget>[
           TextButton(
             onPressed: () {

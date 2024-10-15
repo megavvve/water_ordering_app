@@ -7,11 +7,11 @@ class OrderStatusWidget extends StatelessWidget {
   final VoidCallback onRate;
 
   const OrderStatusWidget({
-    Key? key,
+    super.key,
     required this.status,
     required this.delivererId,
     required this.onRate,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

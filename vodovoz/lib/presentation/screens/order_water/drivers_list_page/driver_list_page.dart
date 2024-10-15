@@ -9,15 +9,16 @@ import 'package:vodovoz/domain/entities/user_model/user_model.dart';
 
 import 'package:vodovoz/domain/repositories/geolocation_repository.dart';
 import 'package:vodovoz/domain/repositories/order_repository.dart';
-import 'package:vodovoz/domain/repositories/user/notification_repository.dart';
-
 import 'package:vodovoz/injection_container.dart';
 import 'package:vodovoz/presentation/providers/active_delivery_provider.dart';
 import 'package:vodovoz/presentation/providers/order_user_bloc/order_user_bloc.dart';
 import 'package:vodovoz/presentation/providers/order_user_bloc/order_user_event.dart';
 import 'package:vodovoz/presentation/providers/order_user_bloc/order_user_state.dart';
 import 'package:vodovoz/presentation/screens/order_water/drivers_list_page/widget/deliverer_widget.dart';
+import 'package:vodovoz/presentation/screens/order_water/drivers_list_page/widget/deliverer_widget_with_accept_reject.dart';
 import 'package:vodovoz/presentation/screens/order_water/drivers_list_page/widget/load_deliverers_first_time.dart';
+import 'package:vodovoz/presentation/screens/order_water/drivers_list_page/widget/order_widget.dart';
+import 'package:vodovoz/presentation/screens/order_water/drivers_list_page/widget/show_deliverer_pop_up.dart';
 import 'package:vodovoz/presentation/widgets/navigation/drawer.dart';
 import 'package:vodovoz/presentation/widgets/navigation/set_page.dart';
 import 'package:yandex_mapkit/yandex_mapkit.dart';
@@ -41,41 +42,6 @@ class _DriverListPageState extends State<DriverListPage> {
   List<String> posibleDeliverersIds = [];
   List<Deliverer> delivererPossibleList = [];
 
-  void _showDelivererPopup() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Доступные водители'),
-          contentPadding: EdgeInsets.all(1.sp),
-          content: SizedBox(
-            width: double.maxFinite,
-            child: ListView.builder(
-              shrinkWrap: true,
-              itemCount: delivererPossibleList.length,
-              itemBuilder: (BuildContext context, int index) {
-                final deliverer = delivererPossibleList[index];
-
-                return DelivererWidget(
-                    deliverer: deliverer,
-                    onAccept: _acceptOrder,
-                    onReject: _rejectOrder);
-              },
-            ),
-          ),
-          actions: [
-            TextButton(
-              child: const Text('Отмена'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   @override
   void initState() {
     super.initState();
@@ -85,55 +51,20 @@ class _DriverListPageState extends State<DriverListPage> {
   }
 
   Future<void> _acceptOrder(UserModel deliverer) async {
-    final orderBloc = context.read<OrderUserBloc>();
-    final order = (orderBloc.state as OrderUserLoaded).order;
-
-    try {
-      setState(() {
-        order.idsOfPossibleDeliverers.remove(deliverer.userId);
-        order.delivererId = deliverer.userId;
-        order.status = 'accepted';
-      });
-
-      await orderRepo.updateOrder(order);
-
-      await getIt<NotificationRepository>().sendNotificationtoOtherUser(
-        notificationTitle: 'Заказ принят',
-        notificationBody: 'Клиент принял вашу заявку на доставку.',
-        deviceToken: deliverer.token ?? '',
-      );
-
-      if (mounted) {
-        SetPageWithoutBack(context, 'orderAccepted');
-      }
-    } catch (e) {
-      // Логирование или отображение ошибки пользователю
-      print('Ошибка при принятии заказа: $e');
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Ошибка'),
-          content: Text('Не удалось принять заказ: $e'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Ок'),
-            ),
-          ],
-        ),
-      );
+    context.read<OrderUserBloc>().add(
+          AcceptDelivererEvent(deliverer.userId, deliverer.token),
+        );
+    Navigator.of(context).pop();
+    if (mounted) {
+      SetPageWithoutBack(context, 'orderAccepted');
     }
   }
 
   Future<void> _rejectOrder(UserModel deliverer) async {
-    final orderBloc = context.read<OrderUserBloc>();
-    final order = (orderBloc.state as OrderUserLoaded).order;
-
-    order.idsOfPossibleDeliverers.remove(deliverer.userId);
-    order.idsOfNotPossibleDeliverers.add(deliverer.userId);
-
-    await orderRepo.updateOrder(order);
-    setState(() {});
+    context.read<OrderUserBloc>().add(
+          RejectDelivererEvent(deliverer.userId, deliverer.token),
+        );
+    Navigator.of(context).pop();
   }
 
   void _handleRealtimeUpdate() {
@@ -158,13 +89,6 @@ class _DriverListPageState extends State<DriverListPage> {
           } else if (state is OrderUserLoaded) {
             Order order = state.order;
 
-            if (order.waterType.isNotEmpty &&
-                !ckeckIsSubscribeOnRealtimeGeolocation) {
-              loadDeliverers(
-                  order.waterType, activeDeliveryProvider, appWriteService);
-              ckeckIsSubscribeOnRealtimeGeolocation = true;
-            }
-
             return FutureBuilder<Geolocation?>(
               future: getIt<GeolocationRepository>().getGeolocation(order.id),
               builder: (context, snapshot) {
@@ -183,9 +107,15 @@ class _DriverListPageState extends State<DriverListPage> {
                   latitude: double.parse(orderGeolocation.latitude),
                   longitude: double.parse(orderGeolocation.longitude),
                 );
-
+                if (order.waterType.isNotEmpty &&
+                    !ckeckIsSubscribeOnRealtimeGeolocation) {
+                  loadDeliverers(order.waterType, activeDeliveryProvider,
+                      appWriteService, orderPoint);
+                  ckeckIsSubscribeOnRealtimeGeolocation = true;
+                }
                 placemarks = [
                   PlacemarkMapObject(
+                    opacity: 1,
                     mapId: const MapObjectId('order_location'),
                     point: orderPoint,
                     icon: PlacemarkIcon.single(
@@ -193,7 +123,11 @@ class _DriverListPageState extends State<DriverListPage> {
                         image: BitmapDescriptor.fromAssetImage(
                           'assets/images/user_location.png',
                         ),
-                        scale: 1.5,
+                        scale: 2,
+                        anchor: Offset(
+                          0.5,
+                          0.9,
+                        ),
                       ),
                     ),
                   ),
@@ -201,11 +135,19 @@ class _DriverListPageState extends State<DriverListPage> {
                 if (posibleDeliverersIds != order.idsOfPossibleDeliverers) {
                   posibleDeliverersIds = order.idsOfPossibleDeliverers;
                   delivererPossibleList = activeDeliveryProvider.deliverers
-                      .where((x) => posibleDeliverersIds.contains(x.userId))
+                      .where(
+                        (x) =>
+                            posibleDeliverersIds.contains(
+                              x.userId,
+                            ) &&
+                            !order.idsOfNotPossibleDeliverers
+                                .contains(x.userId),
+                      )
                       .toList();
                   WidgetsBinding.instance.addPostFrameCallback((_) {
                     if (delivererPossibleList.isNotEmpty) {
-                      _showDelivererPopup();
+                      showDelivererPopup(context, delivererPossibleList,
+                          _acceptOrder, _rejectOrder);
                     }
                   });
                 }
@@ -217,6 +159,38 @@ class _DriverListPageState extends State<DriverListPage> {
                 return ListenableBuilder(
                   listenable: activeDeliveryProvider,
                   builder: (context1, state1) {
+               // Проверяем, есть ли метка заказа в списке placemarks
+
+    final hasOrderPlacemark = placemarks.any(
+      (placemark) => placemark.mapId.value == 'order_location',
+    );
+
+    // Если метка заказа отсутствует, добавляем её
+    if (!hasOrderPlacemark) {
+      placemarks.add(
+        PlacemarkMapObject(
+          opacity: 1,
+          mapId:  MapObjectId('order_location'),
+          point: orderPoint,
+          icon: PlacemarkIcon.single(
+            PlacemarkIconStyle(
+              image: BitmapDescriptor.fromAssetImage(
+                'assets/images/user_location.png',
+              ),
+              scale: 2,
+              anchor: const Offset(0.5, 0.9),
+            ),
+          ),
+        ),
+      );
+    }
+
+    // Обновляем список меток доставщиков, удаляя устаревшие
+    placemarks.removeWhere((placemark) =>
+        placemark.mapId.value != 'order_location' &&
+        !activeDeliveryProvider.deliverers.any((d) =>
+            'deliverer_${d.userId}' == placemark.mapId.value));
+
                     return Stack(
                       children: [
                         YandexMap(
@@ -239,22 +213,21 @@ class _DriverListPageState extends State<DriverListPage> {
                                     CameraUpdate.newCameraPosition(
                                       CameraPosition(
                                         target: Point(
-                                            latitude: double.parse(
-                                                activeDeliveryProvider
-                                                    .geolocations
-                                                    .firstWhere((x) =>
-                                                        x.geolocationId ==
-                                                        posibleDeliverersIds
-                                                            .last)
-                                                    .latitude),
-                                            longitude: double.parse(
-                                                activeDeliveryProvider
-                                                    .geolocations
-                                                    .firstWhere((x) =>
-                                                        x.geolocationId ==
-                                                        posibleDeliverersIds
-                                                            .last)
-                                                    .longitude)),
+                                          latitude: double.parse(
+                                              activeDeliveryProvider
+                                                  .geolocations
+                                                  .firstWhere((x) =>
+                                                      x.geolocationId ==
+                                                      posibleDeliverersIds.last)
+                                                  .latitude),
+                                          longitude: double.parse(
+                                            activeDeliveryProvider.geolocations
+                                                .firstWhere((x) =>
+                                                    x.geolocationId ==
+                                                    posibleDeliverersIds.last)
+                                                .longitude,
+                                          ),
+                                        ),
                                         zoom: 16,
                                       ),
                                     ),
@@ -285,41 +258,79 @@ class _DriverListPageState extends State<DriverListPage> {
 
                             placemarks.add(
                               PlacemarkMapObject(
+                                opacity: (order.idsOfPossibleDeliverers
+                                            .contains(deliverer.userId) &&
+                                        !order.idsOfNotPossibleDeliverers
+                                            .contains(
+                                          deliverer.userId,
+                                        ))
+                                    ? 0.8
+                                    : 0.5,
                                 mapId: MapObjectId(
                                     'deliverer_${deliverer.userId}'),
                                 onTap: (mapObject, point) {
-                                  if (posibleDeliverersIds
-                                      .contains(deliverer.userId)) {
+                                  if (order.idsOfPossibleDeliverers
+                                          .contains(deliverer.userId) &&
+                                      !order.idsOfNotPossibleDeliverers
+                                          .contains(
+                                        deliverer.userId,
+                                      )) {
                                     showDialog(
                                         context: context,
                                         builder: (BuildContext context) {
                                           return AlertDialog(
-                                              contentPadding:
-                                                  EdgeInsets.all(1.sp),
-                                              content: SizedBox(
-                                                height: 360.h,
-                                                child: DelivererWidget(
-                                                    deliverer: deliverer,
-                                                    onAccept: _acceptOrder,
-                                                    onReject: _rejectOrder),
-                                              ));
+                                            contentPadding:
+                                                EdgeInsets.all(1.sp),
+                                            content:
+                                                DelivererWidgetWithAcceptReject(
+                                              deliverer: deliverer,
+                                              onAccept: _acceptOrder,
+                                              onReject: _rejectOrder,
+                                            ),
+                                          );
                                         });
+                                  } else {
+                                    showDialog(
+                                      context: context,
+                                      builder: (BuildContext context) {
+                                        return AlertDialog(
+                                          contentPadding: EdgeInsets.all(1.sp),
+                                          content: DelivererWidget(
+                                            deliverer: deliverer,
+                                          ),
+                                        );
+                                      },
+                                    );
                                   }
                                 },
                                 point: delivererPoint,
                                 icon: PlacemarkIcon.single(
                                   PlacemarkIconStyle(
                                     image: BitmapDescriptor.fromAssetImage(
-                                      'assets/images/deliverer_truck.png',
+                                      !(order.idsOfPossibleDeliverers
+                                                  .contains(deliverer.userId) &&
+                                              !order.idsOfNotPossibleDeliverers
+                                                  .contains(
+                                                deliverer.userId,
+                                              ))
+                                          ? 'assets/images/deliverer_truck.png'
+                                          : 'assets/images/mark.png',
                                     ),
-                                    scale: 0.1,
+                                    scale: (order.idsOfPossibleDeliverers
+                                                .contains(deliverer.userId) &&
+                                            !order.idsOfNotPossibleDeliverers
+                                                .contains(
+                                              deliverer.userId,
+                                            ))
+                                        ? 0.4
+                                        : 0.08,
                                   ),
                                 ),
                               ),
                             );
                           }
                           return const SizedBox.shrink();
-                        }).toList(),
+                        }),
                         Positioned(
                           bottom: 0,
                           left: 0,
@@ -336,20 +347,44 @@ class _DriverListPageState extends State<DriverListPage> {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Text(
-                                  'Есть водовозы рядом',
+                                  activeDeliveryProvider.deliverers.isNotEmpty
+                                      ? 'Есть водовозы рядом'
+                                      : 'Нет водовозов рядом. Ждите',
                                   style: TextStyle(
                                     fontSize: 20.sp,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
                                 SizedBox(height: 8.h),
-                                const Text('Выбираем подходящих'),
+                                ElevatedButton(
+                                  onPressed: () {
+                                    showDialog(
+                                      context: context,
+                                      builder: (BuildContext context) {
+                                        return AlertDialog(
+                                          contentPadding: EdgeInsets.all(1.sp),
+                                          content: OrderDetailsWidget(
+                                            order: order,
+                                          ),
+                                        );
+                                      },
+                                    );
+                                  },
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(Icons.menu),
+                                      SizedBox(width: 8.w),
+                                      const Text('Посмотреть детали заказа'),
+                                    ],
+                                  ),
+                                ),
                                 SizedBox(height: 8.h),
                                 ElevatedButton(
                                   onPressed: () {
-                                    context
-                                        .read<OrderUserBloc>()
-                                        .add(CancelOrderUserEvent());
+                                    context.read<OrderUserBloc>().add(
+                                          CancelOrderUserEvent(),
+                                        );
                                   },
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
@@ -370,8 +405,14 @@ class _DriverListPageState extends State<DriverListPage> {
                 );
               },
             );
+          } else if (state is OrderUserCanceled) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              SetPageWithoutBack(context, 'orderingRedirect');
+            });
           }
-          return const SizedBox();
+          return Center(
+            child: const CircularProgressIndicator(),
+          );
         },
       ),
       endDrawer: drawer(context),

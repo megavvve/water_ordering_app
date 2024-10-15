@@ -51,12 +51,12 @@ class _RegistrationPageState extends State<RegistrationPage> {
       setState(() {
         btnName = 'Подтвердить';
         smsIsRequest = true;
-      });
+      },);
 
       // Запускаем таймер на 20 секунд
       _startTimer();
     } catch (e) {
-      print("Error on create phone session: $e");
+      print("Error on create phone session in app: $e");
       showError('Ошибка при регистрации. Попробуйте снова.', context);
     }
   }

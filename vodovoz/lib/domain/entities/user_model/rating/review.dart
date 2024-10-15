@@ -10,6 +10,7 @@ class Review {
   bool isDeliverer;
   String comment;
   String date;
+  bool? isReviewForCanceledOrder;
   Review({
     required this.id,
     required this.toWhomUserId,
@@ -19,6 +20,7 @@ class Review {
     required this.isDeliverer,
     required this.comment,
     required this.date,
+    required this.isReviewForCanceledOrder,
   });
 
   Review copyWith({
@@ -30,6 +32,7 @@ class Review {
     bool? isDeliverer,
     String? comment,
     String? date,
+    bool? isReviewForCanceledOrder,
   }) {
     return Review(
       id: id ?? this.id,
@@ -40,6 +43,7 @@ class Review {
       isDeliverer: isDeliverer ?? this.isDeliverer,
       comment: comment ?? this.comment,
       date: date ?? this.date,
+      isReviewForCanceledOrder: isReviewForCanceledOrder ?? this.isReviewForCanceledOrder,
     );
   }
 
@@ -53,55 +57,60 @@ class Review {
       'isDeliverer': isDeliverer,
       'comment': comment,
       'date': date,
+      'isReviewForCanceledOrder': isReviewForCanceledOrder,
     };
   }
 
   factory Review.fromMap(Map<String, dynamic> map) {
-    return Review(
-      id: map['id'] as String? ?? '',
-      toWhomUserId: map['toWhomUserId'] as String? ?? '',
-      fromWhomUserId: map['fromWhomUserId'] as String? ?? '',
-      orderId: map['orderId'] as String? ?? '',
-      rating: (map['rating'] as int?)?.toDouble() ?? 0.0,
-      isDeliverer: map['isDeliverer'] as bool? ?? false,
-      comment: map['comment'] as String? ?? '',
-      date: map['date'] as String? ?? '',
-    );
-  }
+  return Review(
+    id: map['id'] as String,
+    toWhomUserId: map['toWhomUserId'] as String,
+    fromWhomUserId: map['fromWhomUserId'] as String,
+    orderId: map['orderId'] as String,
+    rating: (map['rating'] is int) ? (map['rating'] as int).toDouble() : map['rating'] as double,
+    isDeliverer: map['isDeliverer'] as bool,
+    comment: map['comment'] as String,
+    date: map['date'] as String,
+    isReviewForCanceledOrder: map['isReviewForCanceledOrder'] != null ? map['isReviewForCanceledOrder'] as bool : null,
+  );
+}
+
 
   String toJson() => json.encode(toMap());
 
-  factory Review.fromJson(String source) =>
-      Review.fromMap(json.decode(source) as Map<String, dynamic>);
+  factory Review.fromJson(String source) => Review.fromMap(json.decode(source) as Map<String, dynamic>);
 
   @override
   String toString() {
-    return 'Review(id: $id, toWhomUserId: $toWhomUserId, fromWhomUserId: $fromWhomUserId, orderId: $orderId, rating: $rating, isDeliverer: $isDeliverer, comment: $comment, date: $date)';
+    return 'Review(id: $id, toWhomUserId: $toWhomUserId, fromWhomUserId: $fromWhomUserId, orderId: $orderId, rating: $rating, isDeliverer: $isDeliverer, comment: $comment, date: $date, isReviewForCanceledOrder: $isReviewForCanceledOrder)';
   }
 
   @override
   bool operator ==(covariant Review other) {
     if (identical(this, other)) return true;
-
-    return other.id == id &&
-        other.toWhomUserId == toWhomUserId &&
-        other.fromWhomUserId == fromWhomUserId &&
-        other.orderId == orderId &&
-        other.rating == rating &&
-        other.isDeliverer == isDeliverer &&
-        other.comment == comment &&
-        other.date == date;
+  
+    return 
+      other.id == id &&
+      other.toWhomUserId == toWhomUserId &&
+      other.fromWhomUserId == fromWhomUserId &&
+      other.orderId == orderId &&
+      other.rating == rating &&
+      other.isDeliverer == isDeliverer &&
+      other.comment == comment &&
+      other.date == date &&
+      other.isReviewForCanceledOrder == isReviewForCanceledOrder;
   }
 
   @override
   int get hashCode {
     return id.hashCode ^
-        toWhomUserId.hashCode ^
-        fromWhomUserId.hashCode ^
-        orderId.hashCode ^
-        rating.hashCode ^
-        isDeliverer.hashCode ^
-        comment.hashCode ^
-        date.hashCode;
+      toWhomUserId.hashCode ^
+      fromWhomUserId.hashCode ^
+      orderId.hashCode ^
+      rating.hashCode ^
+      isDeliverer.hashCode ^
+      comment.hashCode ^
+      date.hashCode ^
+      isReviewForCanceledOrder.hashCode;
   }
 }

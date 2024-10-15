@@ -6,6 +6,7 @@ import 'package:vodovoz/injection_container.dart';
 import 'package:vodovoz/presentation/widgets/navigation/set_page.dart';
 
 Drawer drawer(BuildContext context) {
+  final isUserIsDeliverer = getIt<LocalSavedData>().getIsUserIsDeliverer();
   return Drawer(
     width: 250,
     child: Column(
@@ -71,7 +72,7 @@ Drawer drawer(BuildContext context) {
               const Divider(),
               ListTile(
                 title: Text(
-                  'Стать водовозом',
+                  (isUserIsDeliverer==false||isUserIsDeliverer==null)?'Стать водовозом':'Режим водовоза',
                   style: TextStyle(fontSize: 24.sp, color: Colors.black),
                 ),
                 onTap: () async {

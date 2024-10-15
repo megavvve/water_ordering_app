@@ -17,9 +17,9 @@ class OrderCompletedPage extends StatefulWidget {
   final Order? order;
 
   const OrderCompletedPage({
-    Key? key,
+    super.key,
     required this.order,
-  }) : super(key: key);
+  });
 
   @override
   _OrderCompletedPageState createState() => _OrderCompletedPageState();
@@ -123,7 +123,7 @@ class _OrderCompletedPageState extends State<OrderCompletedPage> {
                               color: Colors.amber,
                             ),
                             onRatingUpdate: (rating) {
-                              rating = rating;
+                              _rating = rating;
                             },
                           ),
                         ),
@@ -179,7 +179,7 @@ class _OrderCompletedPageState extends State<OrderCompletedPage> {
       rating: _rating,
       isDeliverer: true,
       comment: comment,
-      date: dateTimeCorrectForm,
+      date: dateTimeCorrectForm, isReviewForCanceledOrder: false,
     );
     await ratingRepo.addReviewForRating(review: review);
     await getIt<OrderRepository>()

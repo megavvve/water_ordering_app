@@ -60,6 +60,14 @@ class LocalSavedData {
     return preferences.getString("currentOrderId") ?? "";
   }
 
+  Future<void> saveIsUserIsDeliverer(bool boolean) async {
+    print("save saveIsUserIsDeliverer");
+    await preferences.setBool("isUserIsDeliverer", boolean);
+  }
+    bool? getIsUserIsDeliverer() {
+    return preferences.getBool("isUserIsDeliverer");
+  }
+
   // clear all the saved data
   clearAllData() async {
     final bool data = await preferences.clear();

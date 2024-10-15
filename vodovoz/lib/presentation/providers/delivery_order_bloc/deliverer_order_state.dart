@@ -62,3 +62,12 @@ class OrderAlreadyAccepted extends DelivererOrderState {
   @override
   List<Object> get props => [order];
 }
+
+class OrderCanceled extends DelivererOrderState {
+  final Order order;
+
+  const OrderCanceled(this.order);
+
+  @override
+  List<Object> get props => [order];
+}

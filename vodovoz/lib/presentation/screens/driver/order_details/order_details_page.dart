@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:vodovoz/domain/entities/geolocation.dart';
 import 'package:vodovoz/domain/entities/user_model/user_model.dart';
 import 'package:vodovoz/domain/repositories/geolocation_repository.dart';
+import 'package:vodovoz/domain/repositories/order_repository.dart';
 import 'package:vodovoz/domain/usecases/get_user_by_id.dart';
 import 'package:vodovoz/injection_container.dart';
 import 'package:vodovoz/presentation/providers/delivery_order_bloc/deliverer_order_bloc.dart';
@@ -11,10 +12,11 @@ import 'package:vodovoz/presentation/screens/driver/order_details/widget/order_d
 import 'package:vodovoz/presentation/screens/driver/order_details/widget/show_cancelation_diaolg.dart';
 import 'package:vodovoz/presentation/screens/driver/order_details/widget/show_completition_dialog.dart';
 import 'package:vodovoz/presentation/screens/driver/order_details/widget/show_confirmation_dialogue.dart';
+import 'package:vodovoz/presentation/widgets/enums/order_status.dart';
 import 'package:vodovoz/presentation/widgets/navigation/set_page.dart';
 
 class OrderDetailsPage extends StatelessWidget {
-  const OrderDetailsPage({Key? key}) : super(key: key);
+  const OrderDetailsPage({super.key});
 
   Future<UserModel?> _fetchUser(String userId) async {
     return getIt<GetUserById>().call(userId);
@@ -43,9 +45,15 @@ class OrderDetailsPage extends StatelessWidget {
           if (state is OrderAlreadyAccepted) {
             final order = state.order;
 
-            if (order.status == 'accepted') {
+            if (order.status == OrderStatus.accepted.name) {
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 showConfirmationDialogForOrderDetails(order, context);
+              });
+            }
+            if (order.status == OrderStatus.canceled.name) {
+              Navigator.of(context);
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                SetPageWithoutBack(context, 'delivery');
               });
             }
 
@@ -122,18 +130,43 @@ class OrderDetailsPage extends StatelessWidget {
               SetPageWithoutBack(context, 'delivery');
             });
             return const SizedBox.shrink();
-          } else {
-            return Container(
-              decoration: const BoxDecoration(
-                color: Colors.blueAccent,
-              ),
-              child: const Center(
-                child: Text(
-                  'Нет активного заказа',
-                ),
-              ),
-            );
+          } else if (state is OrderCanceled) {
+            final canceledOrder = state.order;
+
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              Navigator.of(context);
+              SetPageWithoutBack(context, 'delivery');
+
+              // Показываем всплывающее окно с информацией об отменённом заказе
+              showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                    title: Text('Заказ отменён'),
+                    content: Text(
+                        'Заказ под номером: ${canceledOrder.id.hashCode} был отменён пользователем.'),
+                    actions: <Widget>[
+                      TextButton(
+                        onPressed: () {
+                          // Обновляем статус завершенности заказа
+                          getIt<OrderRepository>().updateOrder(
+                            canceledOrder.copyWith(
+                              isFinish: true,
+                            ),
+                          );
+                          Navigator.of(context).pop(); // Закрыть диалог
+                        },
+                        child: Text('Закрыть'),
+                      ),
+                    ],
+                  );
+                },
+              );
+            });
           }
+          return const Center(
+            child: CircularProgressIndicator(),
+          );
         },
       ),
     );

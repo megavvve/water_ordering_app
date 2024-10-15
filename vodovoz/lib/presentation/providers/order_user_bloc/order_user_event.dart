@@ -31,8 +31,9 @@ class LoadCurrentOrderEvent extends OrderUserEvent {}
 
 class AcceptDelivererEvent extends OrderUserEvent {
   final String delivererId;
+  final String? delivererToken;
 
-  const AcceptDelivererEvent(this.delivererId);
+  const AcceptDelivererEvent(this.delivererId, this.delivererToken);
 
   @override
   List<Object> get props => [delivererId];
@@ -45,8 +46,9 @@ class UpdateDelivererLocationEvent extends OrderUserEvent {
 
 class RejectDelivererEvent extends OrderUserEvent {
   final String delivererId;
+    final String? delivererToken;
 
-  const RejectDelivererEvent(this.delivererId);
+  const RejectDelivererEvent(this.delivererId, this.delivererToken);
 
   @override
   List<Object> get props => [delivererId];

@@ -1,3 +1,4 @@
+import 'package:appwrite/appwrite.dart';
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:vodovoz/data/datasources/local/local_saved_data.dart';
@@ -29,6 +30,7 @@ class DelivererOrderBloc
     on<UpdateCurrentOrder>(_onUpdateCurrentOrder);
     on<CompleteOrder>(_onCompleteOrder);
     on<RejectPendingOrder>(_onRejectPendingOrder);
+    on<CancelOrder>(_onCancelOrderWithReview);
   }
 
   Future<void> _onLoadOrders(
@@ -53,6 +55,36 @@ class DelivererOrderBloc
         acceptedOrder = null;
       }
 
+      // Check if there is any canceled order where isFinish == false
+      Order? canceledOrder;
+      try {
+        canceledOrder = orders.firstWhere(
+          (order) =>
+              order.delivererId == currentUserId &&
+              order.status == OrderStatus.canceled.name &&
+              order.isFinish == false,
+        );
+      } catch (e) {
+        canceledOrder = null;
+      }
+
+      if (canceledOrder != null) {
+        try {
+          final reviews = await getIt<RatingRepository>()
+              .getReviews(userId: canceledOrder.customerId);
+          reviews.firstWhere((x) =>
+              x.isReviewForCanceledOrder == true &&
+              x.orderId == canceledOrder?.id);
+        } catch (e) {
+          emit(
+            OrderCanceled(
+              canceledOrder,
+            ),
+          );
+          return;
+        }
+      }
+
       if (acceptedOrder != null) {
         emit(OrderAlreadyAccepted(acceptedOrder));
         return;
@@ -69,7 +101,7 @@ class DelivererOrderBloc
                 x.waterType == getIt<LocalSavedData>().getDelivererWaterType(),
           )
           .toList();
-
+      
       emit(OrderLoaded(filteredOrders));
     } catch (e) {
       emit(
@@ -95,6 +127,45 @@ class DelivererOrderBloc
     }
   }
 
+  Future<void> _onCancelOrderWithReview(
+    CancelOrder event,
+    Emitter<DelivererOrderState> emit,
+  ) async {
+    emit(OrderLoading());
+
+    try {
+      final order = event.order;
+
+      // Создаем отзыв для отменённого заказа
+      final review = Review(
+        id: ID.unique(), // Генерируем уникальный ID для отзыва
+        toWhomUserId: order.customerId,
+        fromWhomUserId: currentUserId, // Текущий пользователь - доставщик
+        orderId: order.id,
+        rating: 0,
+        isDeliverer: false,
+        comment: event.reason,
+        date: dateTimeCorrectForm,
+        isReviewForCanceledOrder: true,
+      );
+
+      // Отправляем отзыв в базу данных
+      await getIt<RatingRepository>().addReview(review: review);
+
+      // Обновляем статус заказа на 'canceled'
+      await orderRepository.updateOrder(
+        order.copyWith(
+          status: 'canceled',
+        ),
+      );
+
+      // Возвращаем состояние с отмененным заказом
+      emit(OrderCanceled(order));
+    } catch (e) {
+      emit(OrderError('Ошибка при отмене заказа: $e'));
+    }
+  }
+
   Future<void> _onAcceptPendingOrder(
       AcceptPendingOrder event, Emitter<DelivererOrderState> emit) async {
     final order = event.order;
@@ -108,8 +179,7 @@ class DelivererOrderBloc
           await getIt<GetUserById>().call(order.customerId);
       await getIt<NotificationRepository>().sendNotificationtoOtherUser(
         notificationTitle: textForNotificationTitleFromDeliverer,
-        notificationBody:
-            '$textForNotificationTitleFromDeliverer под номером ${order.id.hashCode}. Зайдите в приложение для подробной информации',
+        notificationBody: textForNotificationTitleFromDeliverer,
         deviceToken: userModelForNotification?.token ?? '',
       );
       if (state is OrderLoaded) {

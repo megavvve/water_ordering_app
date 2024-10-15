@@ -12,7 +12,9 @@ const List<DropdownMenuEntry> payType = [
   DropdownMenuEntry<int>(value: 2, label: 'Переводом при получении'),
   DropdownMenuEntry<int>(value: 3, label: 'Наличными'),
 ];
-const bool isAllowPermissionForAutomaticPassageToBeVodovoz = true;
+const double constantInitRadiusToFindOrdersByDeliverers = 10.0;
+const bool isAllowPermissionForAutomaticPassageToBeVodovoz = false;
+const double constantForFindDeliverersInKM = 30.0;
 final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
 final dateTimeCorrectForm = DateTime.now().toString().substring(0, 10);
 const String appwriteId = "6696b90100392dbab5c0";
@@ -33,4 +35,5 @@ const String reviewsCollectionId = "66c34601002a97c33d0a";
 const String apiKeyForYandexMaps = '106e9257-04f5-403b-a516-90224792f022';
 const String yandexGeosuggestAPIKey = '9a3ef726-3885-4b6e-a42d-24accf724cf2';
 
-const String textForNotificationTitleFromDeliverer = 'Доставщик готов выполнить ваш заказ';
+const String textForNotificationTitleFromDeliverer =
+    'Доставщик готов выполнить ваш заказ';

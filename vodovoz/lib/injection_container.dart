@@ -38,16 +38,17 @@ import 'package:vodovoz/presentation/providers/order_user_bloc/order_user_bloc.d
 final GetIt getIt = GetIt.instance;
 
 Future<void> setupLocator() async {
+  //Services
+  getIt.registerLazySingleton<AppWrite>(() => AppWrite());
   //providers
-getIt.registerLazySingleton<ActiveDeliveryProvider>(
+  getIt.registerLazySingleton<ActiveDeliveryProvider>(
       () => ActiveDeliveryProvider());
   getIt.registerLazySingleton<FormChangeNotifier>(() => FormChangeNotifier());
-  
+
   getIt.registerLazySingleton<DelivererOrderBloc>(() => DelivererOrderBloc());
   getIt.registerLazySingleton<OrderUserBloc>(() => OrderUserBloc());
 
-  //Services
-  getIt.registerLazySingleton<AppWrite>(() => AppWrite());
+  
 
   final sharedPreferences = await SharedPreferences.getInstance();
   getIt.registerSingleton<SharedPreferences>(sharedPreferences);

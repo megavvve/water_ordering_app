@@ -11,20 +11,26 @@ import 'package:vodovoz/domain/repositories/user/rating_repository.dart';
 import 'package:vodovoz/domain/repositories/storage_repository.dart';
 import 'package:vodovoz/domain/repositories/user/user_repository.dart';
 import 'package:vodovoz/injection_container.dart';
+import 'package:vodovoz/utils/input_decorations.dart';
 
-class DelivererWidget extends StatefulWidget {
+class DelivererWidgetWithAcceptReject extends StatefulWidget {
   final Deliverer deliverer;
+  final Future<void> Function(UserModel) onAccept;
+  final Future<void> Function(UserModel) onReject;
 
-  const DelivererWidget({
+  const DelivererWidgetWithAcceptReject({
     super.key,
     required this.deliverer,
+    required this.onAccept,
+    required this.onReject,
   });
 
   @override
-  State<DelivererWidget> createState() => _DelivererWidgetState();
+  State<DelivererWidgetWithAcceptReject> createState() =>
+      _DelivererWidgetState();
 }
 
-class _DelivererWidgetState extends State<DelivererWidget> {
+class _DelivererWidgetState extends State<DelivererWidgetWithAcceptReject> {
   final StorageRepository storageRepo = getIt<StorageRepository>();
   final UserRepository userRepo = getIt<UserRepository>();
   final RatingRepository ratingRepo = getIt<RatingRepository>();
@@ -85,7 +91,10 @@ class _DelivererWidgetState extends State<DelivererWidget> {
         children: [
           SizedBox(
             height: 250.h,
-            child: const Center(child: CircularProgressIndicator())),
+            child: const Center(
+              child: CircularProgressIndicator(),
+            ),
+          ),
         ],
       );
     }
@@ -101,7 +110,7 @@ class _DelivererWidgetState extends State<DelivererWidget> {
     return Padding(
       padding: EdgeInsets.all(10.sp),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -150,6 +159,36 @@ class _DelivererWidgetState extends State<DelivererWidget> {
                         : const SizedBox.shrink(),
                   ],
                 ),
+              ),
+            ],
+          ),
+          SizedBox(height: 10.h),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              FilledButton(
+                onPressed: () {
+                  widget.onAccept(deliverer!);
+                },
+                style: btnStlGreen,
+                child: Text(
+                  'Принять',
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                  ),
+                ),
+              ),
+              SizedBox(
+                width: 15.w,
+              ),
+              FilledButton(
+                onPressed: () {
+                  widget.onReject(deliverer!);
+                },
+                style: btnStlGrey,
+                child: Text('Отклонить', style: TextStyle(fontSize: 14.sp)),
               ),
             ],
           ),

@@ -23,6 +23,7 @@ class DelivererRepositoryImpl implements DelivererRepository {
         databaseId: dbId,
         collectionId: deliverersCollectionId,
         documentId: userId,
+        
       );
       return Deliverer.fromJson(response.data);
     } catch (e) {
@@ -70,6 +71,7 @@ class DelivererRepositoryImpl implements DelivererRepository {
       final response = await database.listDocuments(
         databaseId: dbId,
         collectionId: deliverersCollectionId,
+         queries: [Query.limit(5000)]
       );
 
       return response.documents

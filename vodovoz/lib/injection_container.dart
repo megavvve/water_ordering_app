@@ -3,6 +3,7 @@ import 'package:get_it/get_it.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vodovoz/data/datasources/local/local_saved_data.dart';
+import 'package:vodovoz/data/datasources/local/money_repository.dart';
 import 'package:vodovoz/data/datasources/remote/appwrite.dart';
 import 'package:vodovoz/data/datasources/remote/geo_service.dart';
 import 'package:vodovoz/data/datasources/remote/push_notifications.dart';
@@ -55,6 +56,8 @@ Future<void> setupLocator() async {
   //getIt<SharedPreferences>().clear();
   getIt.registerLazySingleton<GeoService>(() => GeoService());
   getIt.registerLazySingleton<LocalSavedData>(() => LocalSavedData());
+     getIt.registerLazySingleton<MoneyRepository>(
+      () => MoneyRepository());
   await PushNotifications.init();
 
   await PushNotifications.localNotiInit();
@@ -73,6 +76,7 @@ Future<void> setupLocator() async {
   getIt.registerLazySingleton<RatingRepository>(() => RatingRepositoryImpl());
   getIt.registerLazySingleton<GeolocationRepository>(
       () => GeolocationRepositoryImpl());
+   
   //use cases
   getIt.registerLazySingleton(
     () => GetUserById(

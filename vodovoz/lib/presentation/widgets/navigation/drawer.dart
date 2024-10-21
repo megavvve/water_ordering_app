@@ -72,7 +72,9 @@ Drawer drawer(BuildContext context) {
               const Divider(),
               ListTile(
                 title: Text(
-                  (isUserIsDeliverer==false||isUserIsDeliverer==null)?'Стать водовозом':'Режим водовоза',
+                  (isUserIsDeliverer == false || isUserIsDeliverer == null)
+                      ? 'Стать водовозом'
+                      : 'Режим водовоза',
                   style: TextStyle(fontSize: 24.sp, color: Colors.black),
                 ),
                 onTap: () async {
@@ -91,6 +93,44 @@ Drawer drawer(BuildContext context) {
                   SetPageWithoutBack(context, driverRoute);
                 },
               ),
+              const Divider(),
+              isUserIsDeliverer == true
+                  ? ListTile(
+                      title: Text(
+                        'Баланс водовоза',
+                        style: TextStyle(fontSize: 24.sp, color: Colors.black),
+                      ),
+                      onTap: () {
+                        SetPageWithoutBack(context, 'delivererBalance');
+                      },
+                    )
+                  : SizedBox.shrink(),
+              // const Divider(),
+              // ListTile(
+              //   title: Text(
+              //     'Приобрести премиум',
+              //     style: TextStyle(fontSize: 24.sp, color: Colors.black),
+              //   ),
+              //   onTap: () {
+              //     showDialog(
+              //       context: context,
+              //       builder: (BuildContext context) {
+              //         return AlertDialog(
+              //           content: SizedBox(
+              //             width: 300,
+              //             height: 250,
+              //             child: Center(
+              //               child: Text(
+              //                 'Предложение о премиум подписке',
+              //                 style: TextStyle(fontSize: 24.sp),
+              //               ),
+              //             ),
+              //           ),
+              //         );
+              //       },
+              //     );
+              //   },
+              // ),
               // const Divider(),
               // ListTile(
               //   title: Text(

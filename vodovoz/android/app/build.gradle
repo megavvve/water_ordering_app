@@ -7,8 +7,8 @@ plugins {
 android {
     namespace "com.example.vodovoz"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
-
+    //ndkVersion = flutter.ndkVersion
+ndkVersion = "25.1.8937393"
     sourceSets {
         main.java.srcDirs += 'src/main/kotlin'
     }
@@ -29,6 +29,8 @@ android {
     buildTypes {
         release {
             signingConfig = signingConfigs.debug
+            minifyEnabled false 
+            shrinkResources false
         }
     }
 

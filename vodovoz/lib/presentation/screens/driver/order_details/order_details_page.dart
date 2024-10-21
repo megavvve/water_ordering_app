@@ -125,7 +125,6 @@ class OrderDetailsPage extends StatelessWidget {
               ),
             );
           } else if (state is OrderCompleted) {
-            //TODO update isAvalible of deliver
             WidgetsBinding.instance.addPostFrameCallback((_) {
               SetPageWithoutBack(context, 'delivery');
             });

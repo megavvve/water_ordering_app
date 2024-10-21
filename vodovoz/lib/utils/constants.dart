@@ -13,6 +13,10 @@ const List<DropdownMenuEntry> payType = [
   DropdownMenuEntry<int>(value: 3, label: 'Наличными'),
 ];
 const double constantInitRadiusToFindOrdersByDeliverers = 10.0;
+
+const int commissionPercentage = 7;
+const int defaultBalance = 50000;
+
 const bool isAllowPermissionForAutomaticPassageToBeVodovoz = false;
 const double constantForFindDeliverersInKM = 30.0;
 final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();

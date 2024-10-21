@@ -131,13 +131,14 @@ class AppWrite {
                     )) {
               activeDeliveryProvider.removeDeliverer(delivererData['\$id']);
             }
-            // Проверяем, есть ли этот доставщик в списке интересующих нас ID
-            if (delivererData['waterType'] == waterType &&
+             if (delivererData['waterType'] == waterType &&
                 delivererData['isAvailable'] == true) {
               final updatedDeliverer = Deliverer.fromJson(delivererData);
               onUpdate(updatedDeliverer);
 
-              if (!activeDeliveryProvider.deliverers.contains(
+              if (!activeDeliveryProvider.deliverers.map(
+                      (e) => e.userId,
+                    ).contains(
                 delivererData['\$id'],
               )) {
                 final geolocation = await getIt<GeolocationRepository>()

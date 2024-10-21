@@ -374,7 +374,7 @@ class _LineOrderPageState extends State<LineOrderPage> {
                       .getDeliverer(LocalSavedData().getUserId());
                   if (deliverer != null) {
                     delivererRepo.updateDeliverer(
-                      deliverer.copyWith(isAvailable: false, waterType: ""),
+                      deliverer.copyWith(isAvailable: false,),
                     );
                   }
                   SetPageWithoutBack(context, 'delivery');

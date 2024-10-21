@@ -42,6 +42,10 @@ Widget buildInProgressState(BuildContext context, Order order,
             ? _buildOrderDetailRow(
                 'Комментарий:', order.comment ?? 'Отсутствует')
             : SizedBox.shrink(),
+            order.price != 0
+            ? _buildOrderDetailRow(
+                'Цена: ','${order.price} ₽')
+            : SizedBox.shrink(),
         SizedBox(height: 20.sp),
         Divider(color: Colors.grey[300]),
         SizedBox(height: 20.sp),

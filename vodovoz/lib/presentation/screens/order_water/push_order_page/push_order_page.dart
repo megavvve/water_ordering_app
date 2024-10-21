@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:vodovoz/data/datasources/local/local_saved_data.dart';
 import 'package:vodovoz/data/datasources/remote/push_notifications.dart';
 import 'package:vodovoz/domain/entities/geolocation.dart';
+import 'package:vodovoz/domain/repositories/deliverer_repository.dart';
 import 'package:vodovoz/domain/repositories/geolocation_repository.dart';
 import 'package:vodovoz/domain/repositories/user/user_repository.dart';
 import 'package:vodovoz/domain/usecases/add_order_use_case.dart';
@@ -40,11 +41,11 @@ class _PushOrderPageState extends State<PushOrderPage> {
   bool isLitre = true;
   bool _isButtonEnabled = false;
   final UserRepository userRepo = getIt<UserRepository>();
+  final delivererRepo = getIt<DelivererRepository>();
   @override
   void initState() {
     super.initState();
 
-    // Add listener to quantityController
     quantityController.addListener(() {
       final quantity = int.tryParse(quantityController.text) ?? 0;
       if (quantity > 999999999999999999) {
@@ -105,7 +106,8 @@ class _PushOrderPageState extends State<PushOrderPage> {
           comment: commentController.text,
           idsOfPossibleDeliverers: [],
           idsOfNotPossibleDeliverers: [],
-          isLitre: isLitre);
+          isLitre: isLitre,
+          price: 0);
       await getIt<GeolocationRepository>().createGeolocation(
         id,
       );
@@ -123,6 +125,18 @@ class _PushOrderPageState extends State<PushOrderPage> {
       await userRepo.updateUser(
         userById.copyWith(isOnline: true, userType: 'user', token: token),
       );
+      try {
+        final deliverer =
+            await delivererRepo.getDeliverer(LocalSavedData().getUserId());
+
+        if (deliverer?.isAvailable == true) {
+          delivererRepo
+              .updateDeliverer(deliverer!.copyWith(isAvailable: false));
+        }
+      } catch (e) {
+        print(e);
+      }
+
       LocalSavedData().saveCurrentOrderId(id);
       if (mounted) {
         SetPageWithoutBack(context, 'orderingRedirect');
@@ -143,6 +157,7 @@ class _PushOrderPageState extends State<PushOrderPage> {
         ),
       ),
       child: Scaffold(
+        resizeToAvoidBottomInset: false,
         backgroundColor: Colors.transparent,
         body: Stack(
           children: [

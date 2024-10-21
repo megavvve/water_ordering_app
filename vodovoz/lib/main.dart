@@ -7,9 +7,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:vodovoz/data/datasources/local/local_saved_data.dart';
 import 'package:vodovoz/data/datasources/remote/appwrite.dart';
 import 'package:vodovoz/data/datasources/remote/push_notifications.dart';
+import 'package:vodovoz/domain/entities/deliverer.dart';
 import 'package:vodovoz/domain/repositories/deliverer_repository.dart';
 import 'package:vodovoz/domain/usecases/get_deliverer_by_id.dart';
 import 'package:vodovoz/domain/usecases/get_user_by_id.dart';
@@ -17,22 +19,11 @@ import 'package:vodovoz/domain/usecases/update_user_use_case.dart';
 import 'package:vodovoz/firebase_options.dart';
 import 'package:vodovoz/presentation/providers/delivery_order_bloc/deliverer_order_bloc.dart';
 import 'package:vodovoz/presentation/providers/order_user_bloc/order_user_bloc.dart';
-import 'package:vodovoz/presentation/screens/driver/order_details/order_details_page.dart';
-import 'package:vodovoz/presentation/screens/order_water/order_accept_page/order_accept_page.dart';
-import 'package:vodovoz/presentation/screens/registration/sign_in_selection_page.dart';
 import 'package:vodovoz/presentation/widgets/build_no_connection_overlay.dart';
 import 'package:vodovoz/presentation/widgets/enums/user_type.dart';
+import 'package:vodovoz/presentation/widgets/navigation/routes.dart';
 import 'package:vodovoz/presentation/widgets/navigation/set_page.dart';
-import 'package:vodovoz/presentation/screens/order_water/order_redirect_page.dart';
 import 'package:vodovoz/injection_container.dart';
-import 'package:vodovoz/presentation/screens/driver/driver_profile_screen/driver_page.dart';
-import 'package:vodovoz/presentation/screens/history_screen/history_page.dart';
-import 'package:vodovoz/presentation/screens/driver/line_order_screen/line_order_page.dart';
-import 'package:vodovoz/presentation/screens/order_water/drivers_list_page/driver_list_page.dart';
-import 'package:vodovoz/presentation/screens/profile_screen/profile_page.dart';
-import 'package:vodovoz/presentation/screens/order_water/push_order_page/push_order_page.dart';
-import 'package:vodovoz/presentation/screens/registration/registration_screen/registration_page.dart';
-import 'package:vodovoz/presentation/screens/driver/start_delivery_screen/start_delivery_page.dart';
 import 'package:vodovoz/utils/input_decorations.dart';
 
 Future<void> main() async {
@@ -57,7 +48,14 @@ Future<void> main() async {
       );
     }
   });
-
+  WidgetsBinding.instance.addPostFrameCallback((_) async {
+    try {
+      final r = await getApplicationDocumentsDirectory();
+      print('Documents directory path: ${r.path}');
+    } catch (e) {
+      print('Error: $e');
+    }
+  });
   runApp(const MyApp());
 }
 
@@ -171,21 +169,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         splitScreenMode: true,
         builder: (_, child) {
           return MaterialApp(
-            routes: {
-              'home': (context) => const MyHomePage(),
-              'reg': (context) => const RegistrationPage(),
-              'profile': (context) => const ProfilePage(),
-              'pushOrder': (context) => const PushOrderPage(),
-              'driver': (context) => const DriverPage(),
-              'delivery': (context) => const StartDeliveryPage(),
-              'line': (context) => const LineOrderPage(),
-              'history': (context) => const HistoryPage(),
-              'driversList': (context) => const DriverListPage(),
-              'orderingRedirect': (context) => const OrderStatusRedirectPage(),
-              'orderDetailsDeliverer': (context) => const OrderDetailsPage(),
-              'orderAccepted': (context) => const OrderAcceptedPage(),
-              'signInSelection': (context) => const SignInSelectionPage(),
-            },
+            routes: routes,
             title: 'VodovozApp',
             debugShowCheckedModeBanner: false,
             theme: ThemeData(
@@ -283,16 +267,20 @@ class _MyHomePageState extends State<MyHomePage> {
                             }
                           } catch (err) {
                             print(err);
-                            try {
-                              await getIt<GetDelivererById>().call(
-                                localSavedData.getUserId(),
-                              );
-                              localSavedData.saveIsUserIsDeliverer(true);
-                            } catch (e) {
-                              localSavedData.saveIsUserIsDeliverer(false);
-                            }
+
                             initialRoute = 'signInSelection';
                           }
+
+                          Deliverer? dev = await getIt<GetDelivererById>().call(
+                            localSavedData.getUserId(),
+                          );
+                          if (dev != null) {
+                            localSavedData.saveIsUserIsDeliverer(true);
+                          } else {
+                          localSavedData.saveIsUserIsDeliverer(false);
+                          }
+
+                         
 
                           SetPageWithoutBack(context, initialRoute);
                         },

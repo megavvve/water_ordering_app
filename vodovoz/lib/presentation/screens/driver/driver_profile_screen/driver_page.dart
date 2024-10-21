@@ -58,13 +58,11 @@ class _DriverPageState extends State<DriverPage> with ChangeNotifier {
 
   @override
   void dispose() {
-    // Properly dispose the controllers
     regCertController.dispose();
     licenseController.dispose();
     capacityController.dispose();
 
-    // Call super.dispose() to ensure proper cleanup
-    super.dispose(); // This line is essential to avoid the error
+    super.dispose(); 
   }
 
   Future<void> initializeFields() async {
@@ -193,7 +191,7 @@ class _DriverPageState extends State<DriverPage> with ChangeNotifier {
       license: updatedLicense ?? '',
       capacity: updatedCapacity ?? '',
       waterType: '',
-      isAvailable: isAvalible,
+      isAvailable: isAvalible, balance: 0, pricePerLiter: 0,pricePerPiece: 0,
     );
 
     if (carPhoto != carPhotoCopy ||
@@ -334,7 +332,7 @@ class _DriverPageState extends State<DriverPage> with ChangeNotifier {
                               SizedBox(
                                 height: 30.h,
                               ),
-                              if (isFormFilled()) // Show button only if form is filled
+                              if (isFormFilled()) 
                                 Padding(
                                   padding: EdgeInsets.symmetric(vertical: 10.h),
                                   child: SaveButtonSection(

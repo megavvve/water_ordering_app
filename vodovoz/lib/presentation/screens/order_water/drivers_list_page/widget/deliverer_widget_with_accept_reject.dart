@@ -15,12 +15,14 @@ import 'package:vodovoz/utils/input_decorations.dart';
 
 class DelivererWidgetWithAcceptReject extends StatefulWidget {
   final Deliverer deliverer;
+  final int price;
   final Future<void> Function(UserModel) onAccept;
   final Future<void> Function(UserModel) onReject;
 
   const DelivererWidgetWithAcceptReject({
     super.key,
     required this.deliverer,
+    required this.price,
     required this.onAccept,
     required this.onReject,
   });
@@ -147,6 +149,19 @@ class _DelivererWidgetState extends State<DelivererWidgetWithAcceptReject> {
                         color: Colors.grey.shade500,
                         fontSize: 16.sp,
                       ),
+                    ),
+                    SizedBox(
+                      height: 10.h,
+                    ),
+                    Text(
+                      'Цена за заказ: ${widget.price}₽',
+                      style: TextStyle(
+                        color: Colors.grey.shade500,
+                        fontSize: 16.sp,
+                      ),
+                    ),
+                    SizedBox(
+                      height: 10.h,
                     ),
                     rating != null
                         ? Text(

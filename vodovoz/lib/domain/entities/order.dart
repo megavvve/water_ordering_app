@@ -20,6 +20,7 @@ class Order {
   List<String> idsOfNotPossibleDeliverers;
   bool? isFinish;
   bool? isLitre;
+  int price;
   Order(
       {required this.id,
       required this.customerId,
@@ -34,8 +35,10 @@ class Order {
       this.comment,
       required this.idsOfPossibleDeliverers,
       required this.idsOfNotPossibleDeliverers,
+  
       this.isFinish,
-      this.isLitre});
+      this.isLitre,
+          required this.price});
 
   Order copyWith(
       {String? id,
@@ -52,7 +55,8 @@ class Order {
       List<String>? idsOfPossibleDeliverers,
       List<String>? idsOfNotPossibleDeliverers,
       bool? isFinish,
-      bool? isLitre}) {
+      bool? isLitre,
+      int? price}) {
     return Order(
       id: id ?? this.id,
       customerId: customerId ?? this.customerId,
@@ -71,6 +75,7 @@ class Order {
           idsOfNotPossibleDeliverers ?? this.idsOfNotPossibleDeliverers,
       isFinish: isFinish ?? this.isFinish,
       isLitre: isLitre ?? this.isLitre,
+      price: price??this.price
     );
   }
 
@@ -90,7 +95,8 @@ class Order {
       'idsOfPossibleDeliverers': idsOfPossibleDeliverers,
       'idsOfNotPossibleDeliverers': idsOfNotPossibleDeliverers,
       'isFinish': isFinish,
-      'isLitre': isLitre
+      'isLitre': isLitre,
+      'price': price
     };
   }
 
@@ -118,7 +124,8 @@ class Order {
               .map((e) => e as String),
         ),
         isFinish: map['isFinish'] as bool?,
-        isLitre: map['isLitre'] as bool?);
+        isLitre: map['isLitre'] as bool?,
+        price:(map['price'] ==null?(0):(map['price']as int) ));
   }
 
   String toJson() => json.encode(toMap());
@@ -128,7 +135,7 @@ class Order {
 
   @override
   String toString() {
-    return 'Order(id: $id, customerId: $customerId, delivererId: $delivererId, waterType: $waterType, quantity: $quantity, geolocationId: $geolocationId, paymentMethod: $paymentMethod, status: $status, createdAt: $createdAt, updatedAt: $updatedAt, comment: $comment, idsOfPossibleDeliverers: $idsOfPossibleDeliverers, idsOfNotPossibleDeliverers: $idsOfNotPossibleDeliverers)';
+    return 'Order(id: $id,price: $price customerId: $customerId, delivererId: $delivererId, waterType: $waterType, quantity: $quantity, geolocationId: $geolocationId, paymentMethod: $paymentMethod, status: $status, createdAt: $createdAt, updatedAt: $updatedAt, comment: $comment, idsOfPossibleDeliverers: $idsOfPossibleDeliverers, idsOfNotPossibleDeliverers: $idsOfNotPossibleDeliverers)';
   }
 
   @override

@@ -252,6 +252,7 @@ class _ProfilePageState extends State<ProfilePage> {
         ),
       ),
       child: Scaffold(
+        resizeToAvoidBottomInset:false,
         appBar: AppBar(
           backgroundColor: Colors.transparent,
         ),

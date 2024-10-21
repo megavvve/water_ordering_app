@@ -13,7 +13,7 @@ import 'package:vodovoz/presentation/widgets/show_error_widget.dart';
 import 'package:vodovoz/utils/input_decorations.dart';
 
 class RegistrationPage extends StatefulWidget {
-  const RegistrationPage({Key? key}) : super(key: key);
+  const RegistrationPage({super.key});
 
   @override
   _RegistrationPageState createState() => _RegistrationPageState();
@@ -190,6 +190,7 @@ if (smsIsRequest) {
         ),
       ),
       child: Scaffold(
+        resizeToAvoidBottomInset: true,
         backgroundColor: Colors.transparent,
         appBar: AppBar(
           backgroundColor: Colors.transparent,

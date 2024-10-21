@@ -47,15 +47,15 @@ class OrderRepositoryImpl implements OrderRepository {
       DateTime givenDateTime = DateTime.parse(element.$updatedAt);
       DateTime now = DateTime.now();
       Duration difference = now.difference(givenDateTime);
-
+     
       final order = Order.fromMap(element.data);
       if (difference.inDays > 1) {
         if (order.status == OrderStatus.pending.name ||
             order.status == OrderStatus.awaitingConfirmation.name ||
             order.status == OrderStatus.accepted.name) {
           order.status = 'canceled';
-          await updateOrder(order);      
-        print('Разница больше одного дня у заказа, поэтому он стал canceled');
+          await updateOrder(order);
+          print('Разница больше одного дня у заказа, поэтому он стал canceled');
         }
       }
       ordersCollectionIdList.add(order);

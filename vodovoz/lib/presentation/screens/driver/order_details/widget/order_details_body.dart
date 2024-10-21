@@ -54,10 +54,13 @@ class OrderDetailsBody extends StatelessWidget {
                       'Телефон:', customer?.phoneNumber ?? 'Неизвестно'),
                   _buildInfoRow('Адрес:', geolocation.address),
                   _buildInfoRow('Тип воды:', order.waterType),
-                  _buildInfoRow('Количество:', '${order.quantity} ${order.isLitre! ? 'л' : 'шт'}'),
+                  _buildInfoRow('Количество:',
+                      '${order.quantity} ${order.isLitre! ? 'л' : 'шт'}'),
                   _buildInfoRow('Метод оплаты:', order.paymentMethod),
                   if (order.comment != null && order.comment!.isNotEmpty)
                     _buildInfoRow('Комментарии:', order.comment!),
+                  if (order.price != 0)
+                    _buildInfoRow('Цена:', '${order.price} ₽'),
                 ],
               ),
             ),

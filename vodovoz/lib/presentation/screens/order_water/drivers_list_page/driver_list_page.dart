@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:vodovoz/data/datasources/local/money_repository.dart';
 import 'package:vodovoz/data/datasources/remote/appwrite.dart';
 import 'package:vodovoz/domain/entities/deliverer.dart';
 import 'package:vodovoz/domain/entities/geolocation.dart';
@@ -32,6 +33,7 @@ class DriverListPage extends StatefulWidget {
 
 class _DriverListPageState extends State<DriverListPage> {
   final AppWrite appWriteService = getIt<AppWrite>();
+  final moneyRepo = getIt<MoneyRepository>();
   late YandexMapController mapController;
   final activeDeliveryProvider = getIt<ActiveDeliveryProvider>();
   final orderRepo = getIt<OrderRepository>();
@@ -134,20 +136,18 @@ class _DriverListPageState extends State<DriverListPage> {
                 ];
                 if (posibleDeliverersIds != order.idsOfPossibleDeliverers) {
                   posibleDeliverersIds = order.idsOfPossibleDeliverers;
-                  delivererPossibleList = activeDeliveryProvider.deliverers
-                      .where(
-                        (x) =>
-                            posibleDeliverersIds.contains(
-                              x.userId,
-                            ) &&
-                            !order.idsOfNotPossibleDeliverers
-                                .contains(x.userId),
-                      )
-                      .toList();
+                  delivererPossibleList =
+                      activeDeliveryProvider.deliverers.where((x) {
+                    print('Checking deliverer userId: ${x.userId}');
+               
+
+                    return posibleDeliverersIds.contains(x.userId) &&
+                        !order.idsOfNotPossibleDeliverers.contains(x.userId);
+                  }).toList();
                   WidgetsBinding.instance.addPostFrameCallback((_) {
                     if (delivererPossibleList.isNotEmpty) {
                       showDelivererPopup(context, delivererPossibleList,
-                          _acceptOrder, _rejectOrder);
+                          _acceptOrder, _rejectOrder, order, moneyRepo);
                     }
                   });
                 }
@@ -159,83 +159,56 @@ class _DriverListPageState extends State<DriverListPage> {
                 return ListenableBuilder(
                   listenable: activeDeliveryProvider,
                   builder: (context1, state1) {
-               // Проверяем, есть ли метка заказа в списке placemarks
+                    // Проверяем, есть ли метка заказа в списке placemarks
 
-    final hasOrderPlacemark = placemarks.any(
-      (placemark) => placemark.mapId.value == 'order_location',
-    );
+                    final hasOrderPlacemark = placemarks.any(
+                      (placemark) => placemark.mapId.value == 'order_location',
+                    );
 
-    // Если метка заказа отсутствует, добавляем её
-    if (!hasOrderPlacemark) {
-      placemarks.add(
-        PlacemarkMapObject(
-          opacity: 1,
-          mapId:  MapObjectId('order_location'),
-          point: orderPoint,
-          icon: PlacemarkIcon.single(
-            PlacemarkIconStyle(
-              image: BitmapDescriptor.fromAssetImage(
-                'assets/images/user_location.png',
-              ),
-              scale: 2,
-              anchor: const Offset(0.5, 0.9),
-            ),
-          ),
-        ),
-      );
-    }
+                    // Если метка заказа отсутствует, добавляем её
+                    if (!hasOrderPlacemark) {
+                      placemarks.add(
+                        PlacemarkMapObject(
+                          opacity: 1,
+                          mapId: MapObjectId('order_location'),
+                          point: orderPoint,
+                          icon: PlacemarkIcon.single(
+                            PlacemarkIconStyle(
+                              image: BitmapDescriptor.fromAssetImage(
+                                'assets/images/user_location.png',
+                              ),
+                              scale: 2,
+                              anchor: const Offset(0.5, 0.9),
+                            ),
+                          ),
+                        ),
+                      );
+                    }
 
-    // Обновляем список меток доставщиков, удаляя устаревшие
-    placemarks.removeWhere((placemark) =>
-        placemark.mapId.value != 'order_location' &&
-        !activeDeliveryProvider.deliverers.any((d) =>
-            'deliverer_${d.userId}' == placemark.mapId.value));
+                    // Обновляем список меток доставщиков, удаляя устаревшие
+                    placemarks.removeWhere((placemark) =>
+                        placemark.mapId.value != 'order_location' &&
+                        !activeDeliveryProvider.deliverers.any((d) =>
+                            'deliverer_${d.userId}' == placemark.mapId.value));
 
                     return Stack(
                       children: [
                         YandexMap(
                           onMapCreated: (YandexMapController controller) async {
                             mapController = controller;
-                            (posibleDeliverersIds.isEmpty)
-                                ? await controller.moveCamera(
-                                    CameraUpdate.newCameraPosition(
-                                      CameraPosition(
-                                        target: orderPoint,
-                                        zoom: 16,
-                                      ),
-                                    ),
-                                    animation: const MapAnimation(
-                                      type: MapAnimationType.linear,
-                                      duration: 2,
-                                    ),
-                                  )
-                                : await controller.moveCamera(
-                                    CameraUpdate.newCameraPosition(
-                                      CameraPosition(
-                                        target: Point(
-                                          latitude: double.parse(
-                                              activeDeliveryProvider
-                                                  .geolocations
-                                                  .firstWhere((x) =>
-                                                      x.geolocationId ==
-                                                      posibleDeliverersIds.last)
-                                                  .latitude),
-                                          longitude: double.parse(
-                                            activeDeliveryProvider.geolocations
-                                                .firstWhere((x) =>
-                                                    x.geolocationId ==
-                                                    posibleDeliverersIds.last)
-                                                .longitude,
-                                          ),
-                                        ),
-                                        zoom: 16,
-                                      ),
-                                    ),
-                                    animation: const MapAnimation(
-                                      type: MapAnimationType.linear,
-                                      duration: 2,
-                                    ),
-                                  );
+
+                            await controller.moveCamera(
+                              CameraUpdate.newCameraPosition(
+                                CameraPosition(
+                                  target: orderPoint,
+                                  zoom: 16,
+                                ),
+                              ),
+                              animation: const MapAnimation(
+                                type: MapAnimationType.linear,
+                                duration: 2,
+                              ),
+                            );
                           },
                           mapObjects: placemarks,
                         ),
@@ -284,6 +257,11 @@ class _DriverListPageState extends State<DriverListPage> {
                                             content:
                                                 DelivererWidgetWithAcceptReject(
                                               deliverer: deliverer,
+                                              price: moneyRepo
+                                                  .getOrderPriceWithPotentialDeliverer(
+                                                order,
+                                                deliverer,
+                                              ),
                                               onAccept: _acceptOrder,
                                               onReject: _rejectOrder,
                                             ),

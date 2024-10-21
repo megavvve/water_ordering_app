@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:vodovoz/data/datasources/local/money_repository.dart';
 import 'package:vodovoz/domain/entities/deliverer.dart';
+import 'package:vodovoz/domain/entities/order.dart';
 import 'package:vodovoz/domain/entities/user_model/user_model.dart';
 import 'package:vodovoz/presentation/screens/order_water/drivers_list_page/widget/deliverer_widget_with_accept_reject.dart';
 
-void showDelivererPopup(BuildContext context, List<Deliverer> delivererPossibleList,Future<void> Function(UserModel) acceptOrder,Future<void> Function(UserModel) rejectOrder) {
+void showDelivererPopup(BuildContext context, List<Deliverer> delivererPossibleList,Future<void> Function(UserModel) acceptOrder,Future<void> Function(UserModel) rejectOrder,Order order,MoneyRepository moneyRepo) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -22,7 +24,7 @@ void showDelivererPopup(BuildContext context, List<Deliverer> delivererPossibleL
                 return DelivererWidgetWithAcceptReject(
                     deliverer: deliverer,
                     onAccept: acceptOrder,
-                    onReject: rejectOrder);
+                    onReject: rejectOrder,price:moneyRepo.getOrderPriceWithPotentialDeliverer(order,deliverer,),);
               },
             ),
           ),

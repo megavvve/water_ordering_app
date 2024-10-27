@@ -11,7 +11,7 @@ import 'package:vodovoz/utils/constants.dart';
 class AppWrite {
   Client appWriteClient = Client()
       .setEndpoint('https://cloud.appwrite.io/v1')
-      .setProject('6696b90100392dbab5c0')
+      .setProject(appwriteId)
       .setSelfSigned(status: true);
 
   Databases getDataBase() {
@@ -135,9 +135,9 @@ class AppWrite {
                 delivererData['isAvailable'] == true) {
               final updatedDeliverer = Deliverer.fromJson(delivererData);
               onUpdate(updatedDeliverer);
-
-              if (!activeDeliveryProvider.deliverers.map(
-                      (e) => e.userId,
+  
+              if (!activeDeliveryProvider.geolocations.map(
+                      (e) => e.geolocationId,
                     ).contains(
                 delivererData['\$id'],
               )) {

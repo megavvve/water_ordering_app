@@ -28,10 +28,10 @@ class LineOrderPage extends StatefulWidget {
   const LineOrderPage({super.key});
 
   @override
-  _LineOrderPageState createState() => _LineOrderPageState();
+  LineOrderPageState createState() => LineOrderPageState();
 }
 
-class _LineOrderPageState extends State<LineOrderPage> {
+class LineOrderPageState extends State<LineOrderPage> {
   late DelivererOrderBloc delivererOrderBloc;
   final AppWrite appWriteService = getIt<AppWrite>();
   final GeolocationRepository geolocationRepository =
@@ -211,7 +211,7 @@ class _LineOrderPageState extends State<LineOrderPage> {
                       );
                     } else if (state is OrderAlreadyAccepted) {
                       SchedulerBinding.instance.addPostFrameCallback((_) {
-                        SetPageWithBack(context, 'orderDetailsDeliverer');
+                        SetPageWithoutBack(context, 'orderDetailsDeliverer');
                       });
                       return const SizedBox.shrink();
                     } else if (state is OrderLoaded) {

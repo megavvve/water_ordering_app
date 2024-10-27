@@ -17,21 +17,21 @@ import 'package:vodovoz/presentation/providers/order_user_bloc/order_user_bloc.d
 import 'package:vodovoz/presentation/providers/order_user_bloc/order_user_event.dart';
 import 'package:vodovoz/presentation/providers/order_user_bloc/order_user_state.dart';
 import 'package:vodovoz/presentation/screens/order_water/order_accept_page/widgets/build_in_progress_widget.dart';
-import 'package:vodovoz/presentation/screens/order_water/order_accept_page/widgets/cancel_order.dart';
 import 'package:vodovoz/presentation/screens/order_water/order_competed_page.dart';
 import 'package:vodovoz/presentation/widgets/enums/order_status.dart';
 import 'package:vodovoz/presentation/widgets/navigation/drawer.dart';
+import 'package:vodovoz/presentation/widgets/navigation/set_page.dart';
 
 class OrderAcceptedPage extends StatefulWidget {
   const OrderAcceptedPage({
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   @override
-  _OrderAcceptedPageState createState() => _OrderAcceptedPageState();
+  OrderAcceptedPageState createState() => OrderAcceptedPageState();
 }
 
-class _OrderAcceptedPageState extends State<OrderAcceptedPage> {
+class OrderAcceptedPageState extends State<OrderAcceptedPage> {
   UserModel? deliverer;
   Geolocation? geolocationDeliverer;
   File? avatar;
@@ -56,7 +56,6 @@ class _OrderAcceptedPageState extends State<OrderAcceptedPage> {
 
   void _handleRealtimeUpdate() {
     getIt<OrderUserBloc>().add(LoadOrderUserEvent());
-    //context.read<OrderUserBloc>().add(LoadOrderUserEvent());
   }
 
   @override
@@ -152,7 +151,7 @@ class _OrderAcceptedPageState extends State<OrderAcceptedPage> {
               SizedBox(height: 30.sp),
               ElevatedButton.icon(
                 onPressed: () {
-                  cancelOrder(context);
+                  getIt<OrderUserBloc>().add(CancelOrderUserEvent());
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.redAccent,
@@ -192,6 +191,11 @@ class _OrderAcceptedPageState extends State<OrderAcceptedPage> {
                 child: CircularProgressIndicator(
               color: Colors.white,
             ));
+          } else if (state is OrderUserCanceled) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              SetPageWithoutBack(context, 'orderingRedirect');
+            });
+            return SizedBox.shrink();
           } else if (state is OrderUserError) {
             return Center(
               child: Text(
@@ -214,6 +218,15 @@ class _OrderAcceptedPageState extends State<OrderAcceptedPage> {
                   );
                 });
               }
+              return const SizedBox.shrink();
+            }
+            if (order.status == OrderStatus.pending.name) {
+              if (mounted) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  SetPageWithoutBack(context, 'driversList');
+                });
+              }
+           
               return const SizedBox.shrink();
             }
 
@@ -274,11 +287,9 @@ class _OrderAcceptedPageState extends State<OrderAcceptedPage> {
             );
           } else {
             return const Center(
-              child: Text(
-                'Неизвестное состояние',
-                style: TextStyle(color: Colors.white),
-              ),
-            );
+                child: CircularProgressIndicator(
+              color: Colors.white,
+            ));
           }
         },
       ),

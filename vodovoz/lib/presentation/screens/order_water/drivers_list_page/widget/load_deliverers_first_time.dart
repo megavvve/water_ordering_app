@@ -44,7 +44,7 @@ Future<void> loadDeliverers(
         delivererPoint.longitude,
       )/1000.0;
 
-      // Если расстояние меньше или равно 30 км, добавляем доставщика
+      
       if (distance <= constantForFindDeliverersInKM) {
         activeDeliveryProvider.updateGeolocation(delivererGeolocation);
       }
@@ -55,6 +55,7 @@ Future<void> loadDeliverers(
   appWriteService.subscribeToRealtimeForDeliverersUpdates(
     waterType: waterType,
     onUpdate: (Deliverer updatedDelivererData) {
+      
       activeDeliveryProvider.updateDeliverer(updatedDelivererData);
     },
   );

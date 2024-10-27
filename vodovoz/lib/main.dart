@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
+//import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:vodovoz/data/datasources/local/local_saved_data.dart';
 import 'package:vodovoz/data/datasources/remote/appwrite.dart';
@@ -19,7 +19,7 @@ import 'package:vodovoz/domain/usecases/update_user_use_case.dart';
 import 'package:vodovoz/firebase_options.dart';
 import 'package:vodovoz/presentation/providers/delivery_order_bloc/deliverer_order_bloc.dart';
 import 'package:vodovoz/presentation/providers/order_user_bloc/order_user_bloc.dart';
-import 'package:vodovoz/presentation/widgets/build_no_connection_overlay.dart';
+//import 'package:vodovoz/presentation/widgets/build_no_connection_overlay.dart';
 import 'package:vodovoz/presentation/widgets/enums/user_type.dart';
 import 'package:vodovoz/presentation/widgets/navigation/routes.dart';
 import 'package:vodovoz/presentation/widgets/navigation/set_page.dart';
@@ -56,6 +56,16 @@ Future<void> main() async {
       print('Error: $e');
     }
   });
+  final localSavedData = getIt<LocalSavedData>();
+  Deliverer? dev = await getIt<GetDelivererById>().call(
+    localSavedData.getUserId(),
+  );
+  if (dev != null) {
+    localSavedData.saveIsUserIsDeliverer(true);
+  } else {
+    localSavedData.saveIsUserIsDeliverer(false);
+  }
+
   runApp(const MyApp());
 }
 
@@ -69,34 +79,34 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
-  late final StreamSubscription<InternetStatus> _subscription;
-  bool _isInternetConnected = true;
+  // late final StreamSubscription<InternetStatus> _subscription;
+  // bool _isInternetConnected = true;
 
   @override
   void initState() {
     super.initState();
-    _subscription =
-        InternetConnection().onStatusChange.listen((InternetStatus status) {
-      switch (status) {
-        case InternetStatus.connected:
-          setState(() {
-            _isInternetConnected = true;
-          });
-          break;
-        case InternetStatus.disconnected:
-          setState(() {
-            _isInternetConnected = false;
-          });
-          break;
-      }
-    });
-    WidgetsBinding.instance.addObserver(this);
+    // _subscription =
+    //     InternetConnection().onStatusChange.listen((InternetStatus status) {
+    //   switch (status) {
+    //     case InternetStatus.connected:
+    //       setState(() {
+    //         _isInternetConnected = true;
+    //       });
+    //       break;
+    //     case InternetStatus.disconnected:
+    //       setState(() {
+    //         _isInternetConnected = false;
+    //       });
+    //       break;
+    //   }
+    // });
+    // WidgetsBinding.instance.addObserver(this);
   }
 
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    _subscription.cancel();
+    //WidgetsBinding.instance.removeObserver(this);
+    //_subscription.cancel();
     super.dispose();
   }
 
@@ -178,9 +188,9 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
             ),
             initialRoute: 'home',
             builder: (context, child) {
-              if (!_isInternetConnected) {
-                return buildNoConnectionOverlay(child!, context);
-              }
+              // if (!_isInternetConnected) {
+              //   return buildNoConnectionOverlay(child!, context);
+              // }
               return child!;
             },
           );
@@ -270,17 +280,6 @@ class _MyHomePageState extends State<MyHomePage> {
 
                             initialRoute = 'signInSelection';
                           }
-
-                          Deliverer? dev = await getIt<GetDelivererById>().call(
-                            localSavedData.getUserId(),
-                          );
-                          if (dev != null) {
-                            localSavedData.saveIsUserIsDeliverer(true);
-                          } else {
-                          localSavedData.saveIsUserIsDeliverer(false);
-                          }
-
-                         
 
                           SetPageWithoutBack(context, initialRoute);
                         },

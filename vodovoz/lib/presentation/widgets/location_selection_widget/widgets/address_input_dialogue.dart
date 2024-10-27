@@ -12,13 +12,12 @@ class AddressInputDialog extends StatefulWidget {
   final Function(Point, String) onLocationSelected;
   final String? initialAddress;
 
-  final bool isProfile;
+
 
   const AddressInputDialog({
     required this.onLocationSelected,
     this.initialAddress,
     super.key,
-    required this.isProfile,
   });
 
   @override
@@ -56,14 +55,11 @@ class AddressInputDialogState extends State<AddressInputDialog> {
       });
       return;
     }
-    if (!widget.isProfile && currentGeolocation == null) {
-      currentGeolocation = await getIt<GeolocationRepository>()
+    currentGeolocation ??= await getIt<GeolocationRepository>()
           .getGeolocation(LocalSavedData().getUserId());
-    }
 
-    final List<String>? suggestions = (widget.isProfile)
-        ? await geoService.searchCities(query)
-        : await geoService.searchAddresses(query, currentGeolocation);
+    final List<String>? suggestions = 
+         await geoService.searchAddresses(query, currentGeolocation);
     if (mounted) {
       setState(() {
         _suggestions.clear();

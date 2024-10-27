@@ -20,7 +20,7 @@ Widget buildOrderList(List<Order> filteredOrders) {
               ],
             ),
             child: Padding(
-              padding: EdgeInsets.all(25.sp),
+              padding: EdgeInsets.symmetric(vertical:5.h,horizontal: 10.w),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -107,7 +107,7 @@ Widget buildDriverOrderList(List<Order> filteredOrders, String cuurentDate) {
                   ],
                 ),
                 child: Padding(
-                  padding: EdgeInsets.all(25.sp),
+                   padding: EdgeInsets.symmetric(vertical:5.h,horizontal: 10.w),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [

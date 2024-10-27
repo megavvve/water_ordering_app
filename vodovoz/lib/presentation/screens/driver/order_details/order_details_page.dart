@@ -13,6 +13,7 @@ import 'package:vodovoz/presentation/screens/driver/order_details/widget/show_ca
 import 'package:vodovoz/presentation/screens/driver/order_details/widget/show_completition_dialog.dart';
 import 'package:vodovoz/presentation/screens/driver/order_details/widget/show_confirmation_dialogue.dart';
 import 'package:vodovoz/presentation/widgets/enums/order_status.dart';
+import 'package:vodovoz/presentation/widgets/navigation/drawer.dart';
 import 'package:vodovoz/presentation/widgets/navigation/set_page.dart';
 
 class OrderDetailsPage extends StatelessWidget {
@@ -30,6 +31,7 @@ class OrderDetailsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.blueAccent,
+      endDrawer: drawer(context),
       appBar: AppBar(
         automaticallyImplyLeading: false,
         toolbarHeight: 30.h,
@@ -42,9 +44,22 @@ class OrderDetailsPage extends StatelessWidget {
       ),
       body: BlocBuilder<DelivererOrderBloc, DelivererOrderState>(
         builder: (context, state) {
-          if (state is OrderAlreadyAccepted) {
+          // if (state is OrderAccepted) {
+          //   final order = state.order;
+          //   if (order.status == OrderStatus.pending.name) {
+          //     Navigator.of(context);
+          //     WidgetsBinding.instance.addPostFrameCallback((_) {
+          //       SetPageWithoutBack(context, 'delivery');
+          //     });
+          //   }
+   if (state is OrderAlreadyAccepted) {
             final order = state.order;
 
+            if (order.status == OrderStatus.pending.name) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                SetPageWithoutBack(context, 'line');
+              });
+            }
             if (order.status == OrderStatus.accepted.name) {
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 showConfirmationDialogForOrderDetails(order, context);
@@ -133,7 +148,7 @@ class OrderDetailsPage extends StatelessWidget {
             final canceledOrder = state.order;
 
             WidgetsBinding.instance.addPostFrameCallback((_) {
-              Navigator.of(context);
+              Navigator.of(context).pop();
               SetPageWithoutBack(context, 'delivery');
 
               // Показываем всплывающее окно с информацией об отменённом заказе
@@ -143,7 +158,7 @@ class OrderDetailsPage extends StatelessWidget {
                   return AlertDialog(
                     title: Text('Заказ отменён'),
                     content: Text(
-                        'Заказ под номером: ${canceledOrder.id.hashCode} был отменён пользователем.'),
+                        'Заказ №${canceledOrder.id.hashCode} был отменён пользователем.'),
                     actions: <Widget>[
                       TextButton(
                         onPressed: () {
@@ -154,6 +169,32 @@ class OrderDetailsPage extends StatelessWidget {
                             ),
                           );
                           Navigator.of(context).pop(); // Закрыть диалог
+                        },
+                        child: Text('Закрыть'),
+                      ),
+                    ],
+                  );
+                },
+              );
+            });
+          }else if (state is OrderReject) {
+            final canceledOrder = state.order;
+
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              Navigator.of(context).pop();
+              SetPageWithoutBack(context, 'line');
+              showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                    title: Text('Отказ от заказа'),
+                    content: Text(
+                        'Вы отказались от заказа №${canceledOrder.id.hashCode} '),
+                    actions: <Widget>[
+                      TextButton(
+                        onPressed: () {
+                         
+                          Navigator.of(context).pop(); 
                         },
                         child: Text('Закрыть'),
                       ),

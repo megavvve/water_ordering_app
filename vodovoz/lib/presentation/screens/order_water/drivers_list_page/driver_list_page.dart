@@ -139,7 +139,6 @@ class _DriverListPageState extends State<DriverListPage> {
                   delivererPossibleList =
                       activeDeliveryProvider.deliverers.where((x) {
                     print('Checking deliverer userId: ${x.userId}');
-               
 
                     return posibleDeliverersIds.contains(x.userId) &&
                         !order.idsOfNotPossibleDeliverers.contains(x.userId);
@@ -151,15 +150,15 @@ class _DriverListPageState extends State<DriverListPage> {
                     }
                   });
                 }
-                if (order.idsOfNotPossibleDeliverers.isNotEmpty) {
+               
+                return ListenableBuilder(
+                  listenable: activeDeliveryProvider,
+                  builder: (context1, state1) {
+                     if (order.idsOfNotPossibleDeliverers.isNotEmpty) {
                   for (var element in order.idsOfNotPossibleDeliverers) {
                     activeDeliveryProvider.removeDeliverer(element);
                   }
                 }
-                return ListenableBuilder(
-                  listenable: activeDeliveryProvider,
-                  builder: (context1, state1) {
-                    // Проверяем, есть ли метка заказа в списке placemarks
 
                     final hasOrderPlacemark = placemarks.any(
                       (placemark) => placemark.mapId.value == 'order_location',
@@ -220,6 +219,7 @@ class _DriverListPageState extends State<DriverListPage> {
                           final delivererGeolocation = geolocationList.isEmpty
                               ? null
                               : geolocationList.first;
+                          if (delivererGeolocation == null) {activeDeliveryProvider.checkGeolocationPresence(deliverer.userId);}
 
                           if (delivererGeolocation != null) {
                             final delivererPoint = Point(

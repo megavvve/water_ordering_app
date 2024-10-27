@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:vodovoz/domain/entities/geolocation.dart';
 import 'package:vodovoz/domain/entities/order.dart';
+import 'package:vodovoz/domain/repositories/geolocation_repository.dart';
+import 'package:vodovoz/injection_container.dart';
 
 class OrderItemWidget extends StatelessWidget {
   final Order order;
 
-  const OrderItemWidget({required this.order, Key? key}) : super(key: key);
+  const OrderItemWidget({required this.order, super.key});
 
   String translateStatus(String status) {
     switch (status) {
@@ -82,26 +85,40 @@ class OrderItemWidget extends StatelessWidget {
           },
         );
       },
-      child: Padding(
-        padding: EdgeInsets.all(15.sp),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Заказ № ${order.id.hashCode}',
-              style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 10.h),
-            Text(
-              'Статус: $translatedStatus',
-              style: TextStyle(
-                fontSize: 16.sp,
-                color: getStatusColor(translatedStatus),
+      child: FutureBuilder<Geolocation?>(
+          future: getIt<GeolocationRepository>().getGeolocation(order.id),
+          builder: (context, snapshot) {
+            Geolocation? geo = snapshot.data;
+            return Padding(
+              padding: EdgeInsets.all(15.sp),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Заказ № ${order.id.hashCode}',
+                    style:
+                        TextStyle(fontSize: 18.sp, fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(height: 10.h),
+                  if (geo != null)
+                    Text(
+                      geo.address,
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                      ),
+                    ),
+                  if (geo != null) SizedBox(height: 10.h),
+                  Text(
+                    'Статус: $translatedStatus',
+                    style: TextStyle(
+                      fontSize: 16.sp,
+                      color: getStatusColor(translatedStatus),
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ],
-        ),
-      ),
+            );
+          }),
     );
   }
 }

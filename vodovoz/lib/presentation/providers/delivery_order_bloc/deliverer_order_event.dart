@@ -66,3 +66,14 @@ class CancelOrder extends DelivererOrderEvent {
   List<Object> get props => [order, reason];
 }
 
+
+
+class RejectAcceptedOrder extends DelivererOrderEvent {
+  final Order order;
+
+
+  const RejectAcceptedOrder(this.order,);
+
+  @override
+  List<Object> get props => [order];
+}

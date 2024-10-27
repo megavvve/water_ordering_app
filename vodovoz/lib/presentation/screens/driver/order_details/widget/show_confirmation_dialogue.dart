@@ -7,6 +7,7 @@ import 'package:vodovoz/domain/usecases/get_deliverer_by_id.dart';
 import 'package:vodovoz/injection_container.dart';
 import 'package:vodovoz/presentation/providers/delivery_order_bloc/deliverer_order_bloc.dart';
 import 'package:vodovoz/presentation/widgets/enums/order_status.dart';
+import 'package:vodovoz/presentation/widgets/navigation/set_page.dart';
 
 void showConfirmationDialogForOrderDetails(
   Order order,
@@ -48,7 +49,7 @@ void showConfirmationDialogForOrderDetails(
                       );
 
                       getIt<DelivererOrderBloc>().add(
-                        UpdateOrderStatus(order, 'inProgress'),
+                        UpdateOrderStatus(order, OrderStatus.inProgress.name),
                       );
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -59,8 +60,12 @@ void showConfirmationDialogForOrderDetails(
                               'Заказ был отменен и не может быть обработан.'),
                         ),
                       );
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        SetPageWithoutBack(context, 'line');
+                      });
                     }
 
+                    
                     Navigator.of(context).pop();
                   },
                 ),
@@ -70,9 +75,8 @@ void showConfirmationDialogForOrderDetails(
                     final orderCopy =
                         await getIt<OrderRepository>().getOrder(order.id);
                     if (orderCopy?.status != OrderStatus.canceled.name) {
-                      getIt<DelivererOrderBloc>().add(
-                        UpdateOrderStatus(order, 'pending'),
-                      );
+                      getIt<DelivererOrderBloc>()
+                          .add(RejectAcceptedOrder(order));
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
@@ -81,6 +85,9 @@ void showConfirmationDialogForOrderDetails(
                               'Заказ был отменен и не может быть обработан.'),
                         ),
                       );
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        SetPageWithoutBack(context, 'line');
+                      });
                     }
                     Navigator.of(context).pop();
                   },

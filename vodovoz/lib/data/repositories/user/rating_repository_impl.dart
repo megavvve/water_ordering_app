@@ -7,6 +7,7 @@ import 'package:vodovoz/domain/repositories/user/rating_repository.dart';
 import 'package:vodovoz/injection_container.dart';
 import 'package:vodovoz/utils/constants.dart';
 
+
 class RatingRepositoryImpl implements RatingRepository {
   late Databases database;
 
@@ -88,10 +89,10 @@ class RatingRepositoryImpl implements RatingRepository {
           (review.isDeliverer) ? rating.delivererRating : rating.overallRating;
 
       // Рассчитываем новый рейтинг
-      final double newRating =
+       double newRating =
           ((currentRating * numberOfRatings.toDouble()) + review.rating) /
               (numberOfRatings.toDouble() + 1.0);
-
+      newRating = double.parse(newRating.toStringAsFixed(1));
       // Обновляем рейтинг и дату обновления
       rating.lastUpdated = dateTimeCorrectForm;
       if (review.isDeliverer) {

@@ -70,10 +70,12 @@ class _DelivererWidgetState extends State<DelivererWidget> {
         isLoading = false;
       });
     } catch (e) {
-      setState(() {
+      if (mounted) {
+        setState(() {
         errorMessage = 'Ошибка загрузки данных: $e';
         isLoading = false;
       });
+      }
     }
   }
 

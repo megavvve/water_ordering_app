@@ -3,7 +3,9 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:vodovoz/domain/entities/geolocation.dart';
 import 'package:vodovoz/domain/entities/order.dart';
 import 'package:vodovoz/domain/entities/user_model/user_model.dart';
-import 'package:vodovoz/presentation/screens/order_water/order_accept_page/widgets/cancel_order.dart';
+import 'package:vodovoz/injection_container.dart';
+import 'package:vodovoz/presentation/providers/order_user_bloc/order_user_bloc.dart';
+import 'package:vodovoz/presentation/providers/order_user_bloc/order_user_event.dart';
 
 Widget buildInProgressState(BuildContext context, Order order,
     Geolocation? geoOrder, UserModel? deliverer) {
@@ -80,7 +82,7 @@ Widget buildInProgressState(BuildContext context, Order order,
           height: 50.h,
           child: ElevatedButton(
             onPressed: () {
-              cancelOrder(context);
+               getIt<OrderUserBloc>().add(CancelOrderUserEvent());
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,

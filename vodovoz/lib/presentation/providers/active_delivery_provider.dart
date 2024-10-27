@@ -1,86 +1,120 @@
 import 'package:flutter/material.dart';
 import 'package:vodovoz/domain/entities/deliverer.dart';
 import 'package:vodovoz/domain/entities/geolocation.dart';
+import 'package:vodovoz/domain/repositories/geolocation_repository.dart';
+import 'package:vodovoz/domain/usecases/get_deliverer_by_id.dart';
+import 'package:vodovoz/injection_container.dart';
 
 class ActiveDeliveryProvider extends ChangeNotifier {
-  // Список текущих доставщиков
   List<Deliverer> _deliverers = [];
-
-  // Список геолокаций доставщиков
-  // ignore: prefer_final_fields
   List<Geolocation> _geolocations = [];
 
-  // Получаем список доставщиков
   List<Deliverer> get deliverers => _deliverers;
-
-  // Получаем список геолокаций
   List<Geolocation> get geolocations => _geolocations;
 
-  // Обновление списка доставщиков
+  /// Инициализация доставщиков с проверкой геолокаций
   void initDeliverers(List<Deliverer> updatedDeliverers) {
     _deliverers = updatedDeliverers;
-    notifyListeners(); // Уведомляем об изменениях
+    syncGeolocationsWithDeliverers();
+    notifyListeners();
   }
 
+  /// Инициализация геолокаций с проверкой доставщиков
   void initGeolocations(List<Geolocation> updatedGeolocations) {
     _geolocations = updatedGeolocations;
-    notifyListeners(); // Уведомляем об изменениях
+    syncDeliverersWithGeolocations();
+    notifyListeners();
   }
 
-  // Обновление геолокации доставщика по ID
+  /// Обновление геолокации доставщика по ID с проверкой
   void updateGeolocation(Geolocation updatedGeolocation) {
-    // Находим индекс геолокации по ID
     final index = _geolocations.indexWhere(
         (geo) => geo.geolocationId == updatedGeolocation.geolocationId);
 
-    // Если геолокация уже существует, обновляем её
     if (index != -1) {
       _geolocations[index] = updatedGeolocation;
-    }
-    // Если геолокации нет, добавляем новую
-    else {
+    } else {
       _geolocations.add(updatedGeolocation);
+      checkDelivererPresence(updatedGeolocation.geolocationId);
     }
-
-    notifyListeners(); // Уведомляем об изменениях
+    notifyListeners();
   }
 
-  // Удаление доставщика
+  /// Обновление конкретного доставщика с проверкой
+  void updateDeliverer(Deliverer updatedDeliverer) {
+    final index = _deliverers.indexWhere(
+        (deliverer) => deliverer.userId == updatedDeliverer.userId);
+
+    if (index != -1) {
+      _deliverers[index] = updatedDeliverer;
+    } else {
+      _deliverers.add(updatedDeliverer);
+      checkGeolocationPresence(updatedDeliverer.userId);
+    }
+    notifyListeners();
+  }
+
+  /// Удаление доставщика и соответствующей геолокации
   void removeDeliverer(String delivererId) {
     try {
       _deliverers.removeWhere((deliverer) => deliverer.userId == delivererId);
       _geolocations.removeWhere((geo) => geo.geolocationId == delivererId);
-      print('deliverers:$_deliverers');
-      print('_geolocations:$_geolocations');
     } catch (e) {
-      print('Exception where remove deliverer:$e');
+      print('Exception when removing deliverer: $e');
     }
-
     notifyListeners();
   }
 
-// Обновление конкретного доставщика
-  void updateDeliverer(Deliverer updatedDeliverer) {
-    // Ищем доставщика по userId в списке
-    final index = _deliverers
-        .indexWhere((deliverer) => deliverer.userId == updatedDeliverer.userId);
-
-    // Если доставщик найден, обновляем его данные
-    if (index != -1) {
-      _deliverers[index] = updatedDeliverer;
-    } else {
-      // Если доставщика нет, добавляем его в список
-      _deliverers.add(updatedDeliverer);
-    }
-
-    // Уведомляем слушателей об изменениях
-    notifyListeners();
-  }
-
-  // Очистка всех данных
+  /// Очистка всех данных
   void clear() {
     _deliverers.clear();
     _geolocations.clear();
     notifyListeners();
+  }
+
+  /// Проверка и добавление геолокации, если отсутствует
+  Future<void> checkGeolocationPresence(String delivererId) async {
+    if (!_geolocations.any((geo) => geo.geolocationId == delivererId)) {
+      // Попытка получить недостающую геолокацию (псевдокод)
+      final newGeo = await _fetchGeolocationById(delivererId);
+      if (newGeo != null) {
+        _geolocations.add(newGeo);
+      }
+    }
+  }
+
+  /// Проверка и добавление доставщика, если отсутствует
+  void checkDelivererPresence(String geolocationId) async {
+    if (!_deliverers.any((deliverer) => deliverer.userId == geolocationId)) {
+      // Попытка получить недостающего доставщика (псевдокод)
+      final newDeliverer = await _fetchDelivererById(geolocationId);
+      if (newDeliverer != null) {
+        _deliverers.add(newDeliverer);
+      }
+    }
+  }
+
+  /// Синхронизация: удаление лишних геолокаций
+  void syncGeolocationsWithDeliverers() {
+    _geolocations.removeWhere((geo) =>
+        !_deliverers.any((deliverer) => deliverer.userId == geo.geolocationId));
+  }
+
+  /// Синхронизация: удаление лишних доставщиков
+  void syncDeliverersWithGeolocations() {
+    _deliverers.removeWhere((deliverer) =>
+        !_geolocations.any((geo) => geo.geolocationId == deliverer.userId));
+  }
+
+  /// Псевдокод для получения геолокации по ID
+  Future<Geolocation?> _fetchGeolocationById(String id) async {
+    // Логика для получения геолокации из источника данных
+    return await getIt<GeolocationRepository>().getGeolocation(id); // Реализовать получение геолокации
+  }
+
+  /// Псевдокод для получения доставщика по ID
+  Future<Deliverer?> _fetchDelivererById(String id) async {
+    // Логика для получения доставщика из источника данных
+    return await getIt<GetDelivererById>().call(id); // Реализовать получение доставщика
   }
 }

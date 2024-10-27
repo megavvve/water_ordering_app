@@ -12,7 +12,7 @@ import 'package:vodovoz/presentation/widgets/navigation/set_page.dart';
 import 'package:vodovoz/injection_container.dart';
 
 class OrderStatusRedirectPage extends StatefulWidget {
-  const OrderStatusRedirectPage({Key? key}) : super(key: key);
+  const OrderStatusRedirectPage({super.key});
 
   @override
   State<OrderStatusRedirectPage> createState() =>

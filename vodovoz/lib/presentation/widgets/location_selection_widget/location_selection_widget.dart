@@ -52,7 +52,7 @@ class _LocationSelectionWidgetState extends State<LocationSelectionWidget> {
               _controller.text = address;
               widget.onLocationSelected(point, address);
             },
-            isProfile: isProfile);
+           );
       },
     );
 

@@ -31,6 +31,7 @@ class DelivererOrderBloc
     on<CompleteOrder>(_onCompleteOrder);
     on<RejectPendingOrder>(_onRejectPendingOrder);
     on<CancelOrder>(_onCancelOrderWithReview);
+    on<RejectAcceptedOrder>(_onRejectAcceptedOrder);
   }
 
   Future<void> _onLoadOrders(
@@ -101,7 +102,7 @@ class DelivererOrderBloc
                 x.waterType == getIt<LocalSavedData>().getDelivererWaterType(),
           )
           .toList();
-      
+
       emit(OrderLoaded(filteredOrders));
     } catch (e) {
       emit(
@@ -135,12 +136,10 @@ class DelivererOrderBloc
 
     try {
       final order = event.order;
-
-      // Создаем отзыв для отменённого заказа
       final review = Review(
-        id: ID.unique(), // Генерируем уникальный ID для отзыва
+        id: ID.unique(),
         toWhomUserId: order.customerId,
-        fromWhomUserId: currentUserId, // Текущий пользователь - доставщик
+        fromWhomUserId: currentUserId,
         orderId: order.id,
         rating: 0,
         isDeliverer: false,
@@ -148,18 +147,14 @@ class DelivererOrderBloc
         date: dateTimeCorrectForm,
         isReviewForCanceledOrder: true,
       );
-
-      // Отправляем отзыв в базу данных
       await getIt<RatingRepository>().addReview(review: review);
 
-      // Обновляем статус заказа на 'canceled'
       await orderRepository.updateOrder(
         order.copyWith(
           status: 'canceled',
         ),
       );
 
-      // Возвращаем состояние с отмененным заказом
       emit(OrderCanceled(order));
     } catch (e) {
       emit(OrderError('Ошибка при отмене заказа: $e'));
@@ -232,6 +227,40 @@ class DelivererOrderBloc
     }
   }
 
+  Future<void> _onRejectAcceptedOrder(
+      RejectAcceptedOrder event, Emitter<DelivererOrderState> emit) async {
+    Order order = event.order;
+
+    try {
+      order.delivererId = '';
+      order.status = OrderStatus.pending.name;
+      final userId = getIt<LocalSavedData>().getUserId();
+
+      order.idsOfPossibleDeliverers.remove(userId);
+      order.idsOfNotPossibleDeliverers.add(userId);
+
+      await getIt<OrderRepository>().updateOrder(order);
+    final userModelForNotification =
+          await getIt<GetUserById>().call(order.customerId);
+      await getIt<NotificationRepository>().sendNotificationtoOtherUser(
+        notificationTitle: 'Отказ от заказа',
+        notificationBody: 'Доставщик отказался от заказа',
+        deviceToken: userModelForNotification?.token ?? '',
+      );
+      emit(
+        OrderReject(
+          order,
+        ),
+      );
+    } catch (e) {
+      emit(
+        OrderError(
+          'Failed to reject order: $e',
+        ),
+      );
+    }
+  }
+
   Future<void> _onUpdateCurrentOrder(
     UpdateCurrentOrder event,
     Emitter<DelivererOrderState> emit,
@@ -268,12 +297,11 @@ class DelivererOrderBloc
     UpdateOrderStatus event,
     Emitter<DelivererOrderState> emit,
   ) async {
-    final order = event.order;
+    Order order = event.order;
     final status = event.status;
 
     try {
-      order.status = status;
-      await orderRepository.updateOrder(order);
+      await orderRepository.updateOrder(order.copyWith(status: status));
       // Re-emit the current state to trigger UI updates
       if (state is OrderLoaded) {
         final orders = (state as OrderLoaded).orders;

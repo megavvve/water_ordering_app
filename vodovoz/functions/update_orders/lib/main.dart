@@ -30,7 +30,7 @@ const String ordersCollectionId = "6697f5c2001b7c65cf49";
       if (difference.inDays > 1) {
         final orderData = doc.data;
         final status = orderData['status'] as String;
-        final isFinish = orderData['isFinish'] as bool;
+        final isFinish = orderData['isFinish'] as bool?;
 
         if ((status == 'pending' ||
             status == 'awaitingConfirmation' ||

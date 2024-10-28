@@ -27,7 +27,8 @@ Future main(final context) async {
 
       // Проверка наличия geolocationId
       orderData['geolocationId'] ??= orderData['id']; 
-
+    // Удаляем системные поля, чтобы избежать ошибок
+      orderData.removeWhere((key, value) => key.startsWith(r'$'));
       final status = orderData['status'] as String;
       final isFinish = orderData['isFinish'] as bool?;
 

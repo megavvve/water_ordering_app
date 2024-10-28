@@ -44,22 +44,7 @@ class OrderRepositoryImpl implements OrderRepository {
         queries: [Query.limit(5000)]);
     List<Order> ordersCollectionIdList = [];
     for (Document element in response.documents) {
-      DateTime givenDateTime = DateTime.parse(element.$updatedAt);
-      DateTime now = DateTime.now();
-      Duration difference = now.difference(givenDateTime);
-
       final order = Order.fromMap(element.data);
-      if (difference.inDays > 1) {
-        if (order.status == OrderStatus.pending.name ||
-            order.status == OrderStatus.awaitingConfirmation.name ||
-            order.status == OrderStatus.accepted.name &&order.isFinish!=true) {
-                  order.isFinish = true;
-        
-          await updateOrder(order);
-          print('Разница больше одного дня у заказа, поэтому он стал canceled');
-        } 
-  
-      }
       ordersCollectionIdList.add(order);
     }
     return ordersCollectionIdList;

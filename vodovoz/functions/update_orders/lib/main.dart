@@ -27,18 +27,19 @@ Future main(final context) async {
 
       // Проверка наличия geolocationId
       orderData['geolocationId'] ??= orderData['id']; 
-    // Удаляем системные поля, чтобы избежать ошибок
-      orderData.removeWhere((key, value) => key.startsWith(r'$'));
+
       final status = orderData['status'] as String;
       final isFinish = orderData['isFinish'] as bool?;
 
       if (difference.inDays > 1) {
+            // Удаляем системные поля, чтобы избежать ошибок
+      orderData.removeWhere((key, value) => key.startsWith(r'$'));
         if (['pending', 'awaitingConfirmation', 'accepted', 'inProgress'].contains(status)) {
           orderData['status'] = 'canceled';
           await databases.updateDocument(
             databaseId: dbId,
             collectionId: ordersCollectionId,
-            documentId: doc.$id,
+            documentId: orderData['id'],
             data: orderData,
           );
           context.log('Заказ с ID ${doc.$id} обновлен: статус -> отмененный');
@@ -49,7 +50,7 @@ Future main(final context) async {
           await databases.updateDocument(
             databaseId: dbId,
             collectionId: ordersCollectionId,
-            documentId: doc.$id,
+            documentId: orderData['id'],
             data: orderData,
           );
           context.log('Заказ с ID ${doc.$id} обновлен: статус -> завершен');

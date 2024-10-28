@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:dart_appwrite/dart_appwrite.dart';
 
 Future main(final context) async {
@@ -15,7 +14,6 @@ Future main(final context) async {
   const String ordersCollectionId = "6697f5c2001b7c65cf49";
 
   try {
-    // Получаем все заказы
     final response = await databases.listDocuments(
       databaseId: dbId,
       collectionId: ordersCollectionId,
@@ -25,18 +23,16 @@ Future main(final context) async {
     for (final doc in response.documents) {
       final DateTime updatedAt = DateTime.parse(doc.$updatedAt);
       final Duration difference = DateTime.now().difference(updatedAt);
+      final orderData = doc.data;
 
-      // Проверяем, прошел ли один день, и статус заказа
+      // Проверка наличия geolocationId
+      orderData['geolocationId'] ??= orderData['id']; 
+
+      final status = orderData['status'] as String;
+      final isFinish = orderData['isFinish'] as bool?;
+
       if (difference.inDays > 1) {
-        final orderData = doc.data;
-        final status = orderData['status'] as String;
-        final isFinish = orderData['isFinish'] as bool?;
-
-        if ((status == 'pending' ||
-            status == 'awaitingConfirmation' ||
-            status == 'accepted' ||
-            status == 'inProgress')) {
-          // Обновляем статус заказа
+        if (['pending', 'awaitingConfirmation', 'accepted', 'inProgress'].contains(status)) {
           orderData['status'] = 'canceled';
           await databases.updateDocument(
             databaseId: dbId,
@@ -46,8 +42,9 @@ Future main(final context) async {
           );
           context.log('Заказ с ID ${doc.$id} обновлен: статус -> отмененный');
         }
+        
         if (isFinish != true) {
-          orderData['isFinish'] = 'true';
+          orderData['isFinish'] = true;
           await databases.updateDocument(
             databaseId: dbId,
             collectionId: ordersCollectionId,

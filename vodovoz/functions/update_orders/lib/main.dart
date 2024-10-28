@@ -1,37 +1,56 @@
 import 'dart:async';
-import 'dart:io';
 import 'package:dart_appwrite/dart_appwrite.dart';
 
-// This Appwrite function will be executed every time your function is triggered
-Future<dynamic> main(final context) async {
-  // You can use the Appwrite SDK to interact with other services
-  // For this example, we're using the Users service
+Future main(final context) async {
+  const String appwriteId = "6696b90100392dbab5c0";
+   const String funAppwriteId = "671f5256000c2b670a19";
   final client = Client()
-    .setEndpoint(Platform.environment['APPWRITE_FUNCTION_API_ENDPOINT'] ?? '')
-    .setProject(Platform.environment['APPWRITE_FUNCTION_PROJECT_ID'] ?? '')
-    .setKey(context.req.headers['x-appwrite-key'] ?? '');
-  final users = Users(client);
+      .setEndpoint('https://cloud.appwrite.io/v1') 
+      .setProject(appwriteId) 
+      .setKey(funAppwriteId);
+
+  final databases = Databases(client);
+ 
+const String dbId = "6697f5b6002cb60641bd";
+const String ordersCollectionId = "6697f5c2001b7c65cf49";
 
   try {
-    final response = await users.list();
-    // Log messages and errors to the Appwrite Console
-    // These logs won't be seen by your end users
-    context.log('Total users: ' + response.total.toString());
+    // Получаем все заказы
+    final response = await databases.listDocuments(
+      databaseId: dbId,
+      collectionId: ordersCollectionId,
+      queries: [Query.limit(5000)],
+    );
+
+    for (final doc in response.documents) {
+      final DateTime updatedAt = DateTime.parse(doc.$updatedAt);
+      final Duration difference = DateTime.now().difference(updatedAt);
+
+      // Проверяем, прошел ли один день, и статус заказа
+      if (difference.inDays > 1) {
+        final orderData = doc.data;
+        final status = orderData['status'];
+        final isFinish = orderData['isFinish'] ?? false;
+
+        if ((status == 'pending' ||
+            status == 'awaitingConfirmation' ||
+            status == 'accepted') &&
+            isFinish!=true) {
+          // Обновляем статус заказа
+          orderData['isFinish'] = true;
+          await databases.updateDocument(
+            databaseId: dbId,
+            collectionId: ordersCollectionId,
+            documentId: doc.$id,
+            data: orderData,
+          );
+          context.log('Заказ с ID ${doc.$id} обновлен: статус -> завершен');
+        }
+      }
+    }
+    return context.res.text('Все заказы проверены и обновлены');
   } catch (e) {
-    context.error('Could not list users: ' + e.toString());
+    context.error('Ошибка при обновлении заказов: $e');
+    return context.res.text('Ошибка при обновлении заказов');
   }
-
-  // The req object contains the request data
-  if (context.req.path == "/ping") {
-    // Use res object to respond with text(), json(), or binary()
-    // Don't forget to return a response!
-    return context.res.text('Pong');
-  }
-
-  return context.res.json({
-    'motto': 'Build like a team of hundreds_',
-    'learn': 'https://appwrite.io/docs',
-    'connect': 'https://appwrite.io/discord',
-    'getInspired': 'https://builtwith.appwrite.io',
-  });
 }

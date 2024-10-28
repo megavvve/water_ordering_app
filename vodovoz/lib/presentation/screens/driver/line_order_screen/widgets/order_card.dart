@@ -12,11 +12,11 @@ class OrderCard extends StatelessWidget {
   final VoidCallback onReject;
 
   const OrderCard({
-    Key? key,
+    super.key,
     required this.order,
     required this.onAccept,
     required this.onReject,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

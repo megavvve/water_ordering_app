@@ -211,7 +211,7 @@ class LineOrderPageState extends State<LineOrderPage> {
                       );
                     } else if (state is OrderAlreadyAccepted) {
                       SchedulerBinding.instance.addPostFrameCallback((_) {
-                        SetPageWithoutBack(context, 'orderDetailsDeliverer');
+                        SetPageWithBack(context, 'orderDetailsDeliverer');
                       });
                       return const SizedBox.shrink();
                     } else if (state is OrderLoaded) {

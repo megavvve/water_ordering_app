@@ -69,6 +69,7 @@ dependencies:
   internet_connection_checker_plus: ^2.5.2
   connectivity_plus: ^6.0.5
   path_provider: ^2.1.4
+  dart_appwrite: ^12.1.0
   
 
 dev_dependencies:

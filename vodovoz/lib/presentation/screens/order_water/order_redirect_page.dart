@@ -6,7 +6,6 @@ import 'package:vodovoz/domain/entities/order.dart';
 import 'package:vodovoz/presentation/providers/order_user_bloc/order_user_bloc.dart';
 import 'package:vodovoz/presentation/providers/order_user_bloc/order_user_event.dart';
 import 'package:vodovoz/presentation/providers/order_user_bloc/order_user_state.dart';
-import 'package:vodovoz/presentation/screens/order_water/order_accept_page/order_accept_page.dart';
 import 'package:vodovoz/presentation/widgets/enums/order_status.dart';
 import 'package:vodovoz/presentation/widgets/navigation/set_page.dart';
 import 'package:vodovoz/injection_container.dart';
@@ -43,12 +42,7 @@ class _OrderStatusRedirectPageState extends State<OrderStatusRedirectPage> {
             if (order.status == 'accepted' ||
                 order.status == 'inProgress' ||
                 order.status == OrderStatus.completed.name) {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const OrderAcceptedPage(),
-                ),
-              );
+              SetPageWithoutBack(context, 'orderAccepted');
             } else {
               if (mounted) {
                 SetPageWithoutBack(context, 'driversList');

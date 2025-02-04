@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "100628826907",
+    "firebase_url": "https://vodovoz-1688a-default-rtdb.europe-west1.firebasedatabase.app",
+    "project_id": "vodovoz-1688a",
+    "storage_bucket": "vodovoz-1688a.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:100628826907:android:732bcb9d394155cd9d21be",
+        "android_client_info": {
+          "package_name": "com.example.vodovoz"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "100628826907-r50ngdcvmfmvdrijlve3lp6t49mchi3o.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.vodovoz",
+            "certificate_hash": "6a5ee8c8010c113dba0c944bde351085fbf3b69a"
+          }
+        },
+        {
+          "client_id": "100628826907-917g1vgqor5a8bigs9d62bhn5qej1q41.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCNlRH9QNNuBtr3HaiH-EcWCXAtykcJKgM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "100628826907-8apqlsdg6atfur0btdfgo7r4hh516jnp.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "100628826907-f31avqf5bl3je7tpj08lbh6qmvdfe9bk.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.vodovoz"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

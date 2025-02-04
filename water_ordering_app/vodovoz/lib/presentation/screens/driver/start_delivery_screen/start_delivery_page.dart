@@ -1,0 +1,396 @@
+import 'dart:io';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:vodovoz/data/datasources/local/local_saved_data.dart';
+import 'package:vodovoz/data/datasources/remote/push_notifications.dart';
+import 'package:vodovoz/domain/entities/deliverer.dart';
+import 'package:vodovoz/domain/entities/geolocation.dart';
+import 'package:vodovoz/domain/entities/user_model/user_model.dart';
+import 'package:vodovoz/domain/repositories/deliverer_repository.dart';
+import 'package:vodovoz/domain/repositories/geolocation_repository.dart';
+import 'package:vodovoz/domain/repositories/storage_repository.dart';
+import 'package:vodovoz/domain/repositories/user/user_repository.dart';
+import 'package:vodovoz/injection_container.dart';
+import 'package:vodovoz/presentation/providers/form_change_notifier.dart';
+import 'package:vodovoz/presentation/widgets/enums/user_type.dart';
+import 'package:vodovoz/presentation/widgets/widgets_for_getting.dart';
+import 'package:vodovoz/presentation/widgets/navigation/drawer.dart';
+import 'package:vodovoz/presentation/widgets/navigation/set_page.dart';
+import 'package:vodovoz/utils/constants.dart';
+
+import 'package:vodovoz/utils/input_decorations.dart';
+
+class StartDeliveryPage extends StatefulWidget {
+  const StartDeliveryPage({
+    super.key,
+  });
+
+  @override
+  State<StatefulWidget> createState() => _StartDeliveryPageState();
+}
+
+class _StartDeliveryPageState extends State<StartDeliveryPage> {
+  UserModel? user;
+  File? avatar;
+  String? selectedWaterType;
+  String? fileId;
+  final userid = LocalSavedData().getUserId();
+  final UserRepository userRepository = getIt<UserRepository>();
+  final DelivererRepository delivererRepository = getIt<DelivererRepository>();
+  // Контроллеры для ввода цен
+  final TextEditingController _pricePerLiterController =
+      TextEditingController();
+  final TextEditingController _pricePerUnitController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
+  final FocusNode _pricePerLiterFocus = FocusNode();
+  final FocusNode _pricePerUnitFocus = FocusNode();
+  @override
+  void initState() {
+    super.initState();
+    _initialize();
+
+    // Добавляем слушатели фокуса и изменений в контроллерах
+    _pricePerLiterController.addListener(_onFieldChange);
+    _pricePerUnitController.addListener(_onFieldChange);
+    _pricePerLiterFocus.addListener(() => _scrollOnFocus(_pricePerLiterFocus));
+    _pricePerUnitFocus.addListener(() => _scrollOnFocus(_pricePerUnitFocus));
+  }
+
+// Слушатель изменений полей
+  void _onFieldChange() {
+    setState(() {});
+  }
+
+  @override
+  void dispose() {
+    _pricePerLiterController.dispose();
+    _pricePerUnitController.dispose();
+    _pricePerLiterFocus.dispose();
+    _pricePerUnitFocus.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _scrollOnFocus(FocusNode focusNode) {
+    if (focusNode.hasFocus) {
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    }
+  }
+
+  bool _canStartDelivery() {
+    int pricePerLiter = int.tryParse(_pricePerLiterController.text) ?? 0;
+    int pricePerUnit = int.tryParse(_pricePerUnitController.text) ?? 0;
+    return selectedWaterType != null && pricePerLiter > 0 && pricePerUnit > 0;
+  }
+
+  Future<void> _initialize() async {
+    try {
+      user = await userRepository.getUserById(userid);
+      Deliverer? deliverer = await delivererRepository.getDeliverer(userid);
+      if (deliverer != null) {
+        setState(() {
+          //selectedWaterType = deliverer.waterType;
+          _pricePerLiterController.text = deliverer.pricePerLiter.toString();
+          _pricePerUnitController.text = deliverer.pricePerPiece.toString();
+        });
+      }
+      setState(() {
+        fileId = user?.fileId ?? '';
+      });
+    } catch (e) {
+      print('Failed to load user data: $e');
+    }
+  }
+
+  Future<void> updateDeliverer() async {
+    final token = await PushNotifications.getDeviceToken();
+    if (user != null && selectedWaterType != null) {
+      userRepository.updateUser(
+          user!.copyWith(token: token, userType: UserType.deliverer.name));
+      Deliverer? deliverer = await delivererRepository.getDeliverer(userid);
+      if (deliverer != null) {
+        deliverer.waterType = selectedWaterType!;
+        deliverer.isAvailable = true;
+        deliverer.pricePerLiter = int.parse(_pricePerLiterController.text);
+        deliverer.pricePerPiece = int.parse(_pricePerUnitController.text);
+        await delivererRepository.saveDeliverer(deliverer);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Colors.blueAccent, Colors.blueGrey],
+        ),
+      ),
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+        ),
+        endDrawer: drawer(context),
+        body: SingleChildScrollView(
+          controller: _scrollController,
+          child: FutureBuilder<File?>(
+            future: fileId != null && fileId!.isNotEmpty
+                ? getIt<StorageRepository>().getAvatar(fileId!, userid)
+                : Future.value(null),
+            builder: (context, snapshot) {
+              avatar = snapshot.data;
+              return FutureBuilder<Geolocation?>(
+                  future: getIt<GeolocationRepository>().getGeolocation(userid),
+                  builder: (context2, snapshot2) {
+                    return Center(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 20.w),
+                        child: SizedBox(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Padding(
+                                padding: EdgeInsets.all(5.sp),
+                                child: Text(
+                                  'Профиль водовоза',
+                                  style: TextStyle(
+                                      fontSize: 34.sp, color: Colors.white),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                              Padding(
+                                padding: EdgeInsets.all(5.sp),
+                                child: SizedBox(
+                                  child: Card(
+                                    child: Center(
+                                      child: Column(
+                                        children: [
+                                          Padding(
+                                            padding: EdgeInsets.symmetric(
+                                                horizontal: 20.w,
+                                                vertical: 10.h),
+                                            child: Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              children: [
+                                                avatar != null
+                                                    ? CircleAvatar(
+                                                        radius: 30.sp,
+                                                        backgroundImage:
+                                                            FileImage(
+                                                          avatar!,
+                                                        ),
+                                                      )
+                                                    : Padding(
+                                                        padding: EdgeInsets.all(
+                                                            5.sp),
+                                                        child: Icon(
+                                                          Icons
+                                                              .account_circle_rounded,
+                                                          size: 55.sp,
+                                                        ),
+                                                      ),
+                                                SizedBox(width: 10.sp),
+                                                Expanded(
+                                                  child: Padding(
+                                                    padding:
+                                                        EdgeInsets.all(5.sp),
+                                                    child: Text(
+                                                      user?.name ?? 'Водовоз',
+                                                      style: TextStyle(
+                                                          fontSize: 20.sp,
+                                                          color: Colors.black),
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                      softWrap: true,
+                                                    ),
+                                                  ),
+                                                )
+                                              ],
+                                            ),
+                                          ),
+                                          Padding(
+                                            padding: EdgeInsets.all(5.sp),
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  'Город: ${snapshot2.data?.address ?? 'Не указан'}',
+                                                  style: TextStyle(
+                                                      fontSize: 18.sp,
+                                                      color: Colors.black),
+                                                ),
+                                                Text(
+                                                  'Телефон: ${user?.phoneNumber ?? 'Не указан'}',
+                                                  style: TextStyle(
+                                                      fontSize: 18.sp,
+                                                      color: Colors.black),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              Padding(
+                                padding: EdgeInsets.all(10.sp),
+                                child: SizedBox(
+                                  height: 60.h,
+                                  width: 300.w,
+                                  child: DropdownMenu<dynamic>(
+                              
+                                    onSelected: (value) {
+                                      setState(() {
+                                        selectedWaterType =
+                                            getWaterTypeLabel(value);
+                                        getIt<FormChangeNotifier>().watertype =
+                                            getWaterTypeLabel(value);
+                                        LocalSavedData().saveDelivererWaterType(
+                                          selectedWaterType ??
+                                              LocalSavedData()
+                                                  .getDelivererWaterType(),
+                                        );
+                                      });
+                                    },
+                                    inputDecorationTheme: inpDecStl,
+                                    dropdownMenuEntries: waterTypes,
+                                    label: const Text('Тип воды'),
+                                    width: 300.w,
+                                    textStyle: TextStyle(
+                                        fontSize: 15.sp, color: Colors.black),
+                                        
+                                  ),
+                                ),
+                              ),
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Padding(
+                                    padding: EdgeInsets.all(5.w),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.center,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Text(
+                                          'Стоимость\n за литр',
+                                          style: TextStyle(
+                                              fontSize: 19.sp,
+                                              color: Colors.white),
+                                        ),
+                                        Padding(
+                                          padding: EdgeInsets.all(5.w),
+                                          child: SizedBox(
+                                            height: 60.h,
+                                            width: 125.w,
+                                            child: TextField(
+                                              keyboardType:
+                                                  TextInputType.number,
+                                              focusNode: _pricePerLiterFocus,
+                                              controller:
+                                                  _pricePerLiterController,
+                                              style: TextStyle(
+                                                  fontSize: 24.sp,
+                                                  color: Colors.black),
+                                              decoration: inptDec1NoLabel(true),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: EdgeInsets.all(5.w),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.center,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Text(
+                                          'Стоимость\n за штуку',
+                                          style: TextStyle(
+                                              fontSize: 19.sp,
+                                              color: Colors.white),
+                                        ),
+                                        Padding(
+                                          padding: EdgeInsets.all(5.w),
+                                          child: SizedBox(
+                                            height: 60.h,
+                                            width: 125.w,
+                                            child: TextField(
+                                              keyboardType:
+                                                  TextInputType.number,
+                                              focusNode: _pricePerUnitFocus,
+                                              controller:
+                                                  _pricePerUnitController,
+                                              style: TextStyle(
+                                                  fontSize: 24.sp,
+                                                  color: Colors.black),
+                                              decoration: inptDec1NoLabel(true),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              Padding(
+                                padding: EdgeInsets.all(5.sp),
+                                child: SizedBox(
+                                  height: 60.h,
+                                  width: 300.w,
+                                  child: FilledButton(
+                                    onPressed: _canStartDelivery()
+                                        ? () async {
+                                            await updateDeliverer();
+                                            SetPageWithBack(context, 'line');
+                                          }
+                                        : null,
+                                    style: btnStl,
+                                    child: const Text('Выйти на линию'),
+                                  ),
+                                ),
+                              ),
+                              Padding(
+                                padding: EdgeInsets.all(5.sp),
+                                child: SizedBox(
+                                  height: 60.h,
+                                  width: 300.w,
+                                  child: FilledButton(
+                                    onPressed: () {
+                                      SetPageWithBack(context, 'driver');
+                                    },
+                                    style: btnStl,
+                                    child: const Text('Изменить'),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  });
+            },
+          ),
+        ),
+      ),
+    );
+  }
+}

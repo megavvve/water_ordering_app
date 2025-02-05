@@ -6,6 +6,7 @@ abstract class RatingRepository {
     required Review review,
   });
   Future<Rating> getRating(String ratingId);
+   Future<Review> getReview(String reviewId);
   Future<void> createRating(String ratingId);
   Future<List<Review>> getReviews({
     required String userId,

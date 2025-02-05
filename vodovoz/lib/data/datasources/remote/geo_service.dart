@@ -19,7 +19,7 @@ class GeoService {
       return data['response']['GeoObjectCollection']['featureMember'][0]
           ['GeoObject']['metaDataProperty']['GeocoderMetaData']['text'];
     } else {
-      throw Exception('Failed to load address');
+      return 'Россия, Ростов-на-Дону, Кировский проспект, 44';
     }
   }
 
@@ -65,7 +65,9 @@ class GeoService {
       final lat = double.parse(coordinates[1]);
       return Point(latitude: lat, longitude: lng);
     } else {
-      throw Exception('Failed to load coordinates');
+      //return Point(latitude: 47.227237, longitude: 39.730060);
+      //throw Exception('Failed to load coordinates');
+      return Point(latitude: 37.4219983, longitude: -122.084);
     }
   }
 
@@ -79,13 +81,18 @@ class GeoService {
       for (final Order order in orders) {
         final Geolocation? orderGeolocation =
             await getIt<GeolocationRepository>().getGeolocation(order.id);
+        print(orderGeolocation);
         final double distance = (Geolocator.distanceBetween(
-                userPosition.latitude,
-                userPosition.longitude,
-                double.parse(orderGeolocation?.latitude ?? '0.0'),
-                double.parse(orderGeolocation?.longitude ?? '0.0',),)) /
+              userPosition.latitude,
+              userPosition.longitude,
+              double.parse(orderGeolocation?.latitude ?? '0.0'),
+              double.parse(
+                orderGeolocation?.longitude ?? '0.0',
+              ),
+            )) /
             1000.0;
-            print('distance: $distance');
+        print(userPosition);
+        print('distance: $distance');
         if (distance <= searchRadiusInKm) {
           nearbyOrders.add(order);
         }
@@ -140,11 +147,11 @@ class GeoService {
           currentGeolocation.longitude.isEmpty) {
         position = await getCurrentPosition();
         url = Uri.parse(
-          'https://suggest-maps.yandex.ru/v1/suggest?apikey=$yandexGeosuggestAPIKey&text=$query&types=house&print_address=1&results=3&ll=${position.longitude},${position.latitude}',
+          'https://suggest-maps.yandex.ru/v1/suggest?apikey=$yandexGeosuggestAPIKey&text=$query&types=geo&print_address=1&results=3&ll=${position.longitude},${position.latitude}',
         );
       } else {
         url = Uri.parse(
-          'https://suggest-maps.yandex.ru/v1/suggest?apikey=$yandexGeosuggestAPIKey&text=$query&types=house&print_address=1&results=3&ll=${currentGeolocation.longitude},${currentGeolocation.latitude}',
+          'https://suggest-maps.yandex.ru/v1/suggest?apikey=$yandexGeosuggestAPIKey&text=$query&types=geo&print_address=1&results=3&ll=${currentGeolocation.longitude},${currentGeolocation.latitude}',
         );
       }
 

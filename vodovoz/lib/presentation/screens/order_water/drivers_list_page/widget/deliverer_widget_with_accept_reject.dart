@@ -165,7 +165,7 @@ class _DelivererWidgetState extends State<DelivererWidgetWithAcceptReject> {
                     ),
                     rating != null
                         ? Text(
-                            'Рейтинг: ${rating!.delivererRating}',
+                            'Рейтинг: ${rating!.delivererRating.toStringAsFixed(1)}',
                             style: TextStyle(
                               color: Colors.grey.shade500,
                               fontSize: 16.sp,

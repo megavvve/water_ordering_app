@@ -11,5 +11,6 @@ abstract class OrderRepository {
   Future<void> addOrder(Order order);
 
   Future<Order?> getActiveOrder();
+  Future<List<Order>> getActiveOrders();
   Future<Order?> getOrderByOrderId(String orderId);
 }

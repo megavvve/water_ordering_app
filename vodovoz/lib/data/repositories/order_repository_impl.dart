@@ -7,6 +7,7 @@ import 'package:vodovoz/data/datasources/remote/appwrite.dart';
 
 import 'package:vodovoz/domain/entities/order.dart';
 import 'package:vodovoz/domain/repositories/order_repository.dart';
+import 'package:vodovoz/domain/repositories/user/rating_repository.dart';
 import 'package:vodovoz/injection_container.dart';
 import 'package:vodovoz/presentation/widgets/enums/order_status.dart';
 import 'package:vodovoz/utils/constants.dart';
@@ -180,24 +181,71 @@ class OrderRepositoryImpl implements OrderRepository {
       );
 
       if (response.documents.isNotEmpty) {
-        // Assuming you only care about the first match
         List<Order> orders =
             response.documents.map((doc) => Order.fromMap(doc.data)).toList();
         orders.removeWhere((x) => x.isFinish == true);
-        final activeOrder = orders.first;
-
-        return activeOrder;
+        for (Order activeOrder in orders) {
+          if (activeOrder.status == OrderStatus.canceled.name) {
+            final reviews = await getIt<RatingRepository>()
+                .getReviews(userId: activeOrder.customerId);
+            if (reviews.any((x) =>
+                x.isReviewForCanceledOrder == true &&
+                x.orderId == activeOrder.id)) {
+              return activeOrder;
+            }
+          } else {
+            return activeOrder;
+          }
+        }
       } else {
         return null;
       }
     } on AppwriteException catch (e) {
-      // Handle Appwrite-specific exceptions
       print('Error fetching order: ${e.message}');
       return null;
     } catch (e) {
-      // Handle any other types of exceptions
       print('Unexpected error: $e');
       return null;
+    }
+    return null;
+  }
+
+  @override
+  Future<List<Order>> getActiveOrders() async {
+    final String userId = LocalSavedData().getUserId();
+
+    try {
+      // Query the database for orders with the given status and user ID
+      final response = await database.listDocuments(
+        databaseId: dbId,
+        collectionId: ordersCollectionId,
+        queries: [
+          Query.equal('customerId', userId),
+          Query.or([
+            Query.equal('status', OrderStatus.pending.name),
+            Query.equal('status', OrderStatus.awaitingConfirmation.name),
+            Query.equal('status', OrderStatus.inProgress.name),
+            Query.equal('status', OrderStatus.accepted.name),
+            Query.equal('status', OrderStatus.completed.name),
+          ]),
+        ],
+      );
+
+      if (response.documents.isNotEmpty) {
+        List<Order> orders =
+            response.documents.map((doc) => Order.fromMap(doc.data)).toList();
+        orders.removeWhere((x) => x.isFinish == true);
+
+        return orders;
+      } else {
+        return [];
+      }
+    } on AppwriteException catch (e) {
+      print('Error fetching orders: ${e.message}');
+      return [];
+    } catch (e) {
+      print('Unexpected error: $e');
+      return [];
     }
   }
 

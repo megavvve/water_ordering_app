@@ -146,4 +146,21 @@ class RatingRepositoryImpl implements RatingRepository {
         databaseId: dbId,
       );
   }
+  
+  @override
+  Future<Review> getReview(String reviewId) async {
+    try {
+      final response = await database.getDocument(
+        collectionId: ratingsCollectionId,
+        documentId: reviewsCollectionId,
+        databaseId: dbId,
+      );
+
+      // Parse the response data into a Rating object
+      return Review.fromMap(response.data);
+    } catch (e) {
+      // Handle errors, e.g., document not found or network issues
+      throw Exception('Error fetching rating: $e');
+    }
+  }
 }

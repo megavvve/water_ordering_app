@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 
-const List<DropdownMenuEntry> waterTypes = [
+final List<DropdownMenuEntry> waterTypes = [
   DropdownMenuEntry<int>(value: 1, label: 'бутилированная'),
   DropdownMenuEntry<int>(value: 2, label: 'речная'),
   DropdownMenuEntry<int>(value: 3, label: 'озерная'),
   DropdownMenuEntry<int>(value: 4, label: 'очищенная'),
 ];
 
-const List<DropdownMenuEntry> payType = [
+final List<DropdownMenuEntry> payType = [
   DropdownMenuEntry<int>(value: 1, label: 'Картой при получении'),
   DropdownMenuEntry<int>(value: 2, label: 'Переводом при получении'),
   DropdownMenuEntry<int>(value: 3, label: 'Наличными'),
@@ -36,7 +36,8 @@ const String endpointId = 'https://cloud.appwrite.io/v1';
 const String ratingsCollectionId = "669fdcbd000e9a2484f6";
 const String reviewsCollectionId = "66c34601002a97c33d0a";
 //const String apiKeyForYandexMaps = 'da924512-acde-4a48-8b66-0a5b1f07a18c';
-const String apiKeyForYandexMaps = '106e9257-04f5-403b-a516-90224792f022';
+//const String apiKeyForYandexMaps = '106e9257-04f5-403b-a516-90224792f022';
+const String apiKeyForYandexMaps = '28ace0b2-1ac5-42d1-bb6d-fe541bb21441';
 const String yandexGeosuggestAPIKey = '9a3ef726-3885-4b6e-a42d-24accf724cf2';
 
 const String textForNotificationTitleFromDeliverer =

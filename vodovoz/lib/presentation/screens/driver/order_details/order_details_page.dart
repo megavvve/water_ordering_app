@@ -44,15 +44,7 @@ class OrderDetailsPage extends StatelessWidget {
       ),
       body: BlocBuilder<DelivererOrderBloc, DelivererOrderState>(
         builder: (context, state) {
-          // if (state is OrderAccepted) {
-          //   final order = state.order;
-          //   if (order.status == OrderStatus.pending.name) {
-          //     Navigator.of(context);
-          //     WidgetsBinding.instance.addPostFrameCallback((_) {
-          //       SetPageWithoutBack(context, 'delivery');
-          //     });
-          //   }
-   if (state is OrderAlreadyAccepted) {
+          if (state is OrderAlreadyAccepted) {
             final order = state.order;
 
             if (order.status == OrderStatus.pending.name) {
@@ -151,7 +143,7 @@ class OrderDetailsPage extends StatelessWidget {
               Navigator.of(context).pop();
               SetPageWithoutBack(context, 'delivery');
 
-              // Показываем всплывающее окно с информацией об отменённом заказе
+            
               showDialog(
                 context: context,
                 builder: (BuildContext context) {
@@ -161,14 +153,14 @@ class OrderDetailsPage extends StatelessWidget {
                         'Заказ №${canceledOrder.id.hashCode} был отменён пользователем.'),
                     actions: <Widget>[
                       TextButton(
-                        onPressed: () {
+                        onPressed: () async {
                           // Обновляем статус завершенности заказа
-                          getIt<OrderRepository>().updateOrder(
+                          await getIt<OrderRepository>().updateOrder(
                             canceledOrder.copyWith(
                               isFinish: true,
                             ),
                           );
-                          Navigator.of(context).pop(); // Закрыть диалог
+                          Navigator.of(context).pop(); 
                         },
                         child: Text('Закрыть'),
                       ),
@@ -177,7 +169,7 @@ class OrderDetailsPage extends StatelessWidget {
                 },
               );
             });
-          }else if (state is OrderReject) {
+          } else if (state is OrderReject) {
             final canceledOrder = state.order;
 
             WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -193,8 +185,7 @@ class OrderDetailsPage extends StatelessWidget {
                     actions: <Widget>[
                       TextButton(
                         onPressed: () {
-                         
-                          Navigator.of(context).pop(); 
+                          Navigator.of(context).pop();
                         },
                         child: Text('Закрыть'),
                       ),
@@ -205,7 +196,9 @@ class OrderDetailsPage extends StatelessWidget {
             });
           }
           return const Center(
-            child: CircularProgressIndicator(color: Colors.white,),
+            child: CircularProgressIndicator(
+              color: Colors.white,
+            ),
           );
         },
       ),

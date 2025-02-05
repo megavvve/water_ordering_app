@@ -80,10 +80,12 @@ class LineOrderPageState extends State<LineOrderPage> {
       return;
     }
 
-    // If permissions are granted, subscribe to geolocation updates
     _subscribeToLocationUpdates();
   }
 
+                
+              
+            
   void _subscribeToLocationUpdates() {
     positionStreamSubscription = Geolocator.getPositionStream().listen(
       (Position position) async {

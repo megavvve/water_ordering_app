@@ -96,68 +96,79 @@ class AuthRepositotyImpl extends AuthRepository {
     }
   }
 
- @override
-Future<User?> signInWithGoogle() async {
-  try {
-    // Инициализация OAuth с Google
-    await account.createOAuth2Session(
-      provider: OAuthProvider.google,  // Используем строку 'google' вместо OAuthProvider.google
-      scopes: ['email', 'profile', 'phone'], // Указываем запрашиваемые доступы
-    );
+  @override
+  Future<User?> signInWithGoogle() async {
+    try {
+      // Инициализация OAuth с Google
+      await account.createOAuth2Session(
+        provider: OAuthProvider
+            .google, // Используем строку 'google' вместо OAuthProvider.google
+        scopes: [
+          'email',
+          'profile',
+          'phone'
+        ], // Указываем запрашиваемые доступы
+      );
 
-    // Получаем текущую сессию пользователя
-    var session = await account.getSession(sessionId: 'current'); // Используем 'current', чтобы получить текущую сессию
-    print('Провайдер: ${session.provider}');
-    print('UID провайдера: ${session.providerUid}');
-    print('Токен доступа: ${session.providerAccessToken}');
-    
-    // Получение информации о текущем пользователе
-    var user = await account.get();
-    print(user);
+      // Получаем текущую сессию пользователя
+      var session = await account.getSession(
+          sessionId:
+              'current'); // Используем 'current', чтобы получить текущую сессию
+      print('Провайдер: ${session.provider}');
+      print('UID провайдера: ${session.providerUid}');
+      print('Токен доступа: ${session.providerAccessToken}');
 
-    return user; // Возвращаем пользователя
-  } on AppwriteException catch (e) {
-    print('Ошибка при входе через Google: $e');
-    return null; // В случае ошибки возвращаем null
+      // Получение информации о текущем пользователе
+      var user = await account.get();
+      print(user);
+
+      return user; // Возвращаем пользователя
+    } on AppwriteException catch (e) {
+      print('Ошибка при входе через Google: $e');
+      return null; // В случае ошибки возвращаем null
+    }
   }
-}
-
 
   bool _isValidCode(String code) {
     final regex = RegExp(r'^\d{6}$');
     return regex.hasMatch(code);
   }
 
- @override 
-Future<String> signUpUsingPhoneNumber(String phone) async {
-  try {
-    final userId = await checkPhoneNumber(phoneno: phone);
+  @override
+  Future<String> signUpUsingPhoneNumber(String phone) async {
+    try {
+      // Check if a user with this phone number already exists
+      final userId = await checkPhoneNumber(phoneno: phone);
 
-    if (userId == "user_not_exist") {
-      // Создание нового пользователя с уникальным ID
-      final Token data = await account.createPhoneToken(
-        userId: ID.unique(), // Уникальный ID для нового пользователя
-        phone: phone,
-      );
+      // Handle the case where the user does not exist
+      if (userId == "user_not_exist") {
+        // Generate a unique ID for the new user
+        final Token data = await account.createPhoneToken(
+          userId: ID.unique(), // Use a unique ID for the new user
+          phone: phone,
+        );
 
-      // Сохранение нового пользователя в локальные данные
-      LocalSavedData().saveUserPhone(phone);
+        // Save the user's phone locally
+        await LocalSavedData().saveUserPhone(phone);
 
-      return data.userId;  // Возвращаем userId нового пользователя
-    } else {
-      // Создание нового токена для существующего пользователя
-      final Token data = await account.createPhoneToken(
-        userId: userId,  // Используем существующий userId
-        phone: phone,
-      );
+        return data.userId; // Return the new user's ID
+      } else {
+        // Handle the case where the user already exists
+        try {
+          final Token data = await account.createPhoneToken(
+            userId: userId, // Use the existing userId
+            phone: phone,
+          );
 
-      return data.userId;  // Возвращаем userId существующего пользователя
+          return data.userId; // Return the existing user's ID
+        } catch (e) {
+          print("Error creating token for existing user: $e");
+          return "token_creation_error";
+        }
+      }
+    } catch (e) {
+      print("Error on create phone session: $e");
+      return "login_error"; // Return an error
     }
-  } catch (e) {
-    print("error on create phone session :$e");
-      
-    return "login_error"; // Возвращаем ошибку
   }
-}
-
 }

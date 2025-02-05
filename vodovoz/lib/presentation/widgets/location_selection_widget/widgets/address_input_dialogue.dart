@@ -12,8 +12,6 @@ class AddressInputDialog extends StatefulWidget {
   final Function(Point, String) onLocationSelected;
   final String? initialAddress;
 
-
-
   const AddressInputDialog({
     required this.onLocationSelected,
     this.initialAddress,
@@ -56,10 +54,10 @@ class AddressInputDialogState extends State<AddressInputDialog> {
       return;
     }
     currentGeolocation ??= await getIt<GeolocationRepository>()
-          .getGeolocation(LocalSavedData().getUserId());
+        .getGeolocation(LocalSavedData().getUserId());
 
-    final List<String>? suggestions = 
-         await geoService.searchAddresses(query, currentGeolocation);
+    final List<String>? suggestions =
+        await geoService.searchAddresses(query, currentGeolocation);
     if (mounted) {
       setState(() {
         _suggestions.clear();
@@ -147,10 +145,16 @@ class AddressInputDialogState extends State<AddressInputDialog> {
               itemCount: _suggestions.length,
               itemBuilder: (context, index) {
                 final parts = _suggestions[index].split(', ');
+
                 final country = parts.first;
                 final place = parts.sublist(1);
-
-                final keywords = ['область', 'регион', 'край', 'республика'];
+                final keywords = [
+                  'область',
+                  'регион',
+                  'край',
+                  'республика',
+                  'улус'
+                ];
                 final countryParts = [country];
                 for (var word in place) {
                   if (keywords
@@ -171,10 +175,7 @@ class AddressInputDialogState extends State<AddressInputDialog> {
                       leading: const Icon(Icons.location_on),
                       title: Text(
                         newPlace,
-                        style:  TextStyle(
-                          color: Colors.black,
-                          fontSize: 13.sp
-                        ),
+                        style: TextStyle(color: Colors.black, fontSize: 13.sp),
                       ),
                       subtitle: Text(newCountry),
                       onTap: () => _selectAddress(_suggestions[index]),

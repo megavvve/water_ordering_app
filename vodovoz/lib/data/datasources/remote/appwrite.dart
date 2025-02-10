@@ -1,6 +1,7 @@
 import 'package:appwrite/appwrite.dart';
 
 import 'package:vodovoz/domain/entities/deliverer.dart';
+import 'package:vodovoz/domain/entities/feedback.dart';
 import 'package:vodovoz/domain/entities/geolocation.dart';
 import 'package:vodovoz/domain/repositories/geolocation_repository.dart';
 import 'package:vodovoz/injection_container.dart';
@@ -206,6 +207,19 @@ class AppWrite {
       }
     } catch (e) {
       print("Error subscribing to geolocation updates: $e");
+    }
+  }
+   Future<void> sendFeedback(Feedback feedback) async {
+    try {
+      final result = await getDataBase().createDocument(
+        collectionId: feedbacksCollectionId, 
+        databaseId: dbId, 
+        documentId: feedback.feedbackId,
+        data: feedback.toJson()
+      );
+      print('Feedback sent: $result');
+    } catch (e) {
+      print('Error sending feedback: $e');
     }
   }
 }

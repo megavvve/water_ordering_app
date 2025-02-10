@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:vodovoz/domain/entities/geolocation.dart';
 import 'package:vodovoz/domain/entities/order.dart';
@@ -23,7 +24,7 @@ class OrderDetailsBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     String customerName = customer?.name ?? 'Неизвестно';
-
+    bool canPop = Navigator.canPop(context);
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
@@ -32,60 +33,93 @@ class OrderDetailsBody extends StatelessWidget {
           colors: [Colors.blueAccent, Colors.blue],
         ),
       ),
-      child: CustomScrollView(
-        slivers: [
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: EdgeInsets.all(16.0.sp),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Информация о заказе',
-                    style: TextStyle(
-                      fontSize: 24.sp,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
+      child: PopScope(
+        canPop: canPop,
+        onPopInvokedWithResult: (bool didPop, _) async {
+          if (!didPop) {
+            final bool? confirmExit = await showDialog<bool>(
+              context: context,
+              builder: (context) => AlertDialog(
+                title: const Text('Выход из приложения'),
+                content: const Text('Вы точно хотите выйти?'),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context, false),
+                    child: const Text('Отмена'),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.pop(context, true),
+                    child: const Text(
+                      'Выйти',
+                      style: TextStyle(color: Colors.red),
                     ),
                   ),
+                ],
+              ),
+            );
+
+            if (confirmExit ?? false) {
+              SystemNavigator.pop();
+            }
+          }
+        },
+        child: CustomScrollView(
+          slivers: [
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.all(16.0.sp),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Text(
+                        'Информация о заказе',
+                        style: TextStyle(
+                          fontSize: 24.sp,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 20.h),
+                    _buildInfoRow('Заказчик:', customerName),
+                    _buildInfoRow(
+                        'Телефон:', customer?.phoneNumber ?? 'Неизвестно'),
+                    _buildInfoRow('Адрес:', geolocation.address),
+                    //_buildInfoRow('Тип воды:', order.waterType),
+                    _buildInfoRow('Количество:',
+                        '${order.quantity} ${order.isLitre! ? 'л' : 'шт'}'),
+                    _buildInfoRow('Метод оплаты:', order.paymentMethod),
+                    if (order.comment != null && order.comment!.isNotEmpty)
+                      _buildInfoRow('Комментарий:', order.comment!),
+                    if (order.price != 0)
+                      _buildInfoRow('Цена:', '${order.price} ₽'),
+                  ],
+                ),
+              ),
+            ),
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  _buildActionButton(
+                    label: 'Завершить заказ',
+                    color: Colors.greenAccent,
+                    onPressed: onCompletionPressed,
+                  ),
+                  SizedBox(height: 15.h),
+                  _buildActionButton(
+                    label: 'Отменить заказ',
+                    color: Colors.redAccent,
+                    onPressed: onCancellationPressed,
+                  ),
                   SizedBox(height: 20.h),
-                  _buildInfoRow('Заказчик:', customerName),
-                  _buildInfoRow(
-                      'Телефон:', customer?.phoneNumber ?? 'Неизвестно'),
-                  _buildInfoRow('Адрес:', geolocation.address),
-                  _buildInfoRow('Тип воды:', order.waterType),
-                  _buildInfoRow('Количество:',
-                      '${order.quantity} ${order.isLitre! ? 'л' : 'шт'}'),
-                  _buildInfoRow('Метод оплаты:', order.paymentMethod),
-                  if (order.comment != null && order.comment!.isNotEmpty)
-                    _buildInfoRow('Комментарии:', order.comment!),
-                  if (order.price != 0)
-                    _buildInfoRow('Цена:', '${order.price} ₽'),
                 ],
               ),
             ),
-          ),
-          SliverFillRemaining(
-            hasScrollBody: false,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                _buildActionButton(
-                  label: 'Завершить заказ',
-                  color: Colors.greenAccent,
-                  onPressed: onCompletionPressed,
-                ),
-                SizedBox(height: 15.h),
-                _buildActionButton(
-                  label: 'Отменить заказ',
-                  color: Colors.redAccent,
-                  onPressed: onCancellationPressed,
-                ),
-                SizedBox(height: 20.h),
-              ],
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

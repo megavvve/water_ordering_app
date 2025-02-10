@@ -22,10 +22,10 @@ class OrderCompletedPage extends StatefulWidget {
   });
 
   @override
-  _OrderCompletedPageState createState() => _OrderCompletedPageState();
+  OrderCompletedPageState createState() => OrderCompletedPageState();
 }
 
-class _OrderCompletedPageState extends State<OrderCompletedPage> {
+class OrderCompletedPageState extends State<OrderCompletedPage> {
   final TextEditingController _commentController = TextEditingController();
   final RatingRepository ratingRepo = getIt<RatingRepository>();
   double _rating = 0;
@@ -87,14 +87,18 @@ class _OrderCompletedPageState extends State<OrderCompletedPage> {
                           'Адрес доставки: ${snapshot.data?.address}',
                           style: const TextStyle(color: Colors.white),
                         ),
-                        Text(
-                          'Количество воды: ${widget.order?.quantity} ${widget.order!.isLitre! ? 'л' : 'шт'}',
+                        // Text(
+                        //   'Количество воды: ${widget.order?.quantity} ${widget.order!.isLitre! ? 'л' : 'шт'}',
+                        //   style: const TextStyle(color: Colors.white),
+                        // ),
+                         Text(
+                          'Объем в литрах: ${widget.order?.quantity}}',
                           style: const TextStyle(color: Colors.white),
                         ),
-                        Text(
-                          'Тип воды: ${widget.order?.waterType}',
-                          style: const TextStyle(color: Colors.white),
-                        ),
+                        // Text(
+                        //   'Тип воды: ${widget.order?.waterType}',
+                        //   style: const TextStyle(color: Colors.white),
+                        // ),
                         SizedBox(height: 10.h),
                         Divider(
                           color: Colors.white,

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:vodovoz/domain/entities/order.dart';
-import 'package:vodovoz/presentation/widgets/enums/order_status.dart';
+import 'package:vodovoz/utils/enums/order_status.dart';
 
 void showCancelDialog(BuildContext context, Order order,
     Future<void> Function(Order order, String status) updateOrderStatus) {

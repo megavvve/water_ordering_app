@@ -6,7 +6,7 @@ import 'package:vodovoz/domain/repositories/order_repository.dart';
 import 'package:vodovoz/domain/usecases/get_deliverer_by_id.dart';
 import 'package:vodovoz/injection_container.dart';
 import 'package:vodovoz/presentation/providers/delivery_order_bloc/deliverer_order_bloc.dart';
-import 'package:vodovoz/presentation/widgets/enums/order_status.dart';
+import 'package:vodovoz/utils/enums/order_status.dart';
 import 'package:vodovoz/presentation/widgets/navigation/set_page.dart';
 
 void showConfirmationDialogForOrderDetails(

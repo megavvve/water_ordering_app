@@ -1,5 +1,6 @@
 import 'package:appwrite/appwrite.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:vodovoz/data/datasources/local/local_saved_data.dart';
 import 'package:vodovoz/data/datasources/remote/push_notifications.dart';
@@ -11,7 +12,7 @@ import 'package:vodovoz/domain/usecases/add_order_use_case.dart';
 import 'package:vodovoz/domain/usecases/get_user_by_id.dart';
 import 'package:vodovoz/injection_container.dart';
 import 'package:vodovoz/presentation/screens/order_water/push_order_page/widgets/show_alert_dialogue.dart';
-import 'package:vodovoz/presentation/widgets/enums/order_status.dart';
+import 'package:vodovoz/utils/enums/order_status.dart';
 import 'package:vodovoz/presentation/widgets/location_selection_widget/location_selection_widget.dart';
 import 'package:vodovoz/presentation/widgets/widgets_for_getting.dart';
 import 'package:vodovoz/domain/entities/order.dart';
@@ -36,7 +37,7 @@ class _PushOrderPageState extends State<PushOrderPage> {
   Point? selectedLocation;
   String? selectedAddress;
   String? _quantityError;
-  int? _selectedWaterType;
+  //int? _selectedWaterType;
   int? _selectedPaymentMethod;
   bool isLitre = true;
   bool _isButtonEnabled = false;
@@ -66,7 +67,7 @@ class _PushOrderPageState extends State<PushOrderPage> {
       _isButtonEnabled = quantityController.text.isNotEmpty &&
           selectedLocation != null &&
           adressController.text.isNotEmpty &&
-          _selectedWaterType != null &&
+         // _selectedWaterType != null &&
           _selectedPaymentMethod != null &&
           _quantityError == null;
     });
@@ -98,7 +99,8 @@ class _PushOrderPageState extends State<PushOrderPage> {
           customerId: LocalSavedData().getUserId(),
           delivererId: "",
           geolocationId: id,
-          waterType: getWaterTypeLabel(_selectedWaterType ?? 1),
+          //waterType: getWaterTypeLabel(_selectedWaterType ?? 1),
+          waterType: "бутилированная",
           quantity: int.parse(quantityController.text),
           paymentMethod: getPayTypeLabel(_selectedPaymentMethod ?? 1),
           status: OrderStatus.pending.name,
@@ -148,6 +150,7 @@ class _PushOrderPageState extends State<PushOrderPage> {
 
   @override
   Widget build(BuildContext context) {
+    bool canPop = Navigator.canPop(context);
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
@@ -156,191 +159,223 @@ class _PushOrderPageState extends State<PushOrderPage> {
           colors: [Colors.blueAccent, Colors.blueGrey],
         ),
       ),
-      child: Scaffold(
-        resizeToAvoidBottomInset: false,
-        backgroundColor: Colors.transparent,
-        body: Stack(
-          children: [
-            ListView(
-              children: [
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Padding(
-                      padding: EdgeInsets.all(
-                        5.sp,
-                      ),
-                      child: Text(
-                        'Оформление заказа',
-                        style: TextStyle(
-                          fontSize: 34.sp,
-                          color: Colors.white,
+      child: PopScope(
+        canPop:canPop,
+        onPopInvokedWithResult:(bool didPop, _) async {
+      if (!didPop) {
+        final bool? confirmExit = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Выход из приложения'),
+            content: const Text('Вы точно хотите выйти?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Отмена'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('Выйти',style: TextStyle(color: Colors.red),),
+              ),
+            ],
+          ),
+        );
+
+        if (confirmExit ?? false) {
+          // Закрываем приложение
+          if (mounted) SystemNavigator.pop();
+        }
+      }
+    },
+        child: Scaffold(
+          resizeToAvoidBottomInset: false,
+          backgroundColor: Colors.transparent,
+          body: Stack(
+            children: [
+              ListView(
+                children: [
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Padding(
+                        padding: EdgeInsets.all(
+                          5.sp,
+                        ),
+                        child: Text(
+                          'Оформление заказа',
+                          style: TextStyle(
+                            fontSize: 34.sp,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
-                    ),
-                    Padding(
-                      padding: EdgeInsets.all(
-                        10.sp,
-                      ),
-                      child: SizedBox(
-                        width: 300.w,
-                        child: DropdownMenu(
-                          onSelected: (value) {
-                            setState(() {
-                              _selectedWaterType = value;
-                              _checkButtonEnabled();
-                            });
-                          },
-                          inputDecorationTheme: inpDecStl,
-                          dropdownMenuEntries: waterTypes,
-                          label: const Text('Тип воды'),
-                          width: 300.w,
-                          textStyle:
-                              TextStyle(fontSize: 15.sp, color: Colors.black),
+                      // Padding(
+                      //   padding: EdgeInsets.all(
+                      //     10.sp,
+                      //   ),
+                      //   child: SizedBox(
+                      //     width: 300.w,
+                      //     child: DropdownMenu(
+                      //       onSelected: (value) {
+                      //         setState(() {
+                      //           _selectedWaterType = value;
+                      //           _checkButtonEnabled();
+                      //         });
+                      //       },
+                      //       inputDecorationTheme: inpDecStl,
+                      //       dropdownMenuEntries: waterTypes,
+                      //       label: const Text('Тип воды'),
+                      //       width: 300.w,
+                      //       textStyle:
+                      //           TextStyle(fontSize: 15.sp, color: Colors.black),
+                      //     ),
+                      //   ),
+                      // ),
+                      Padding(
+                        padding: EdgeInsets.all(
+                          10.sp,
                         ),
-                      ),
-                    ),
-                    Padding(
-                      padding: EdgeInsets.all(
-                        10.sp,
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          SizedBox(
-                            width: 135.w,
-                            child: TextField(
-                              maxLines: null,
-                              controller: quantityController,
-                              keyboardType: TextInputType.number,
-                              style: TextStyle(
-                                  fontSize: 24.sp, color: Colors.black),
-                              decoration: inptDec1('Количество', true).copyWith(
-                                errorText: _quantityError,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            SizedBox(
+                              width: 300.w,
+                              child: TextField(
+                                maxLines: null,
+                                controller: quantityController,
+                                keyboardType: TextInputType.number,
+                                style: TextStyle(
+                                    fontSize: 24.sp, color: Colors.black),
+                                // decoration: inptDec1('Количество', true).copyWith(
+                                //   errorText: _quantityError,
+                                // ),
+                                decoration: inptDec1('Объём в литрах', true).copyWith(
+                                   errorText: _quantityError,
+                                 ),
                               ),
                             ),
-                          ),
-                          SizedBox(
-                            width: 20.w,
-                          ),
-                          ToggleButtons(
-                            isSelected: isSelected,
-                            onPressed: (int index) {
+                      //       SizedBox(
+                      //         width: 20.w,
+                      //       ),
+                      //       ToggleButtons(
+                      //         isSelected: isSelected,
+                      //         onPressed: (int index) {
+                      //           setState(() {
+                      //             for (int buttonIndex = 0;
+                      //                 buttonIndex < isSelected.length;
+                      //                 buttonIndex++) {
+                      //               if (buttonIndex == index) {
+                      //                 isSelected[buttonIndex] = true;
+                      //               } else {
+                      //                 isSelected[buttonIndex] = false;
+                      //               }
+                      //             }
+                      //             isLitre = isSelected[0];
+                      //           });
+                      //         },
+                      //         borderRadius: BorderRadius.circular(16.sp),
+                      //         selectedBorderColor: Colors.blue,
+                      //         selectedColor: Colors.white,
+                      //         fillColor: Colors.green,
+                      //         borderColor: Colors.white,
+                      //         splashColor: Colors.green[300],
+                      //         children: [
+                      //           SizedBox(
+                      //             width: 70.w,
+                      //             height: 60.h,
+                      //             child: Center(
+                      //                 child: Text(
+                      //               'Литры',
+                      //               style: TextStyle(fontSize: 16.sp),
+                      //             )),
+                      //           ),
+                      //           SizedBox(
+                      //             width: 70.w,
+                      //             height: 60.h,
+                      //             child: Center(
+                      //                 child: Text(
+                      //               'Штуки',
+                      //               style: TextStyle(fontSize: 16.sp),
+                      //             )),
+                      //           ),
+                      //         ],
+                      //       ),
+                           ],
+                         ),
+                       ),
+                      LocationSelectionWidget(
+                        initialAddress: adressController.text,
+                        onLocationSelected: (point, address) {
+                          setState(() {
+                            selectedLocation = point;
+                            selectedAddress = address;
+                            adressController.text = address;
+                            _checkButtonEnabled();
+                          });
+                          Navigator.of(context).pop();
+                        },
+                        labelText: 'Адрес доставки',
+                      ),
+                      Padding(
+                        padding: EdgeInsets.all(10.sp),
+                        child: SizedBox(
+                          width: 300.w,
+                          child: DropdownMenu(
+                            onSelected: (value) {
                               setState(() {
-                                for (int buttonIndex = 0;
-                                    buttonIndex < isSelected.length;
-                                    buttonIndex++) {
-                                  if (buttonIndex == index) {
-                                    isSelected[buttonIndex] = true;
-                                  } else {
-                                    isSelected[buttonIndex] = false;
-                                  }
-                                }
-                                isLitre = isSelected[0];
+                                _selectedPaymentMethod = value;
+                                _checkButtonEnabled();
                               });
                             },
-                            borderRadius: BorderRadius.circular(16.sp),
-                            selectedBorderColor: Colors.blue,
-                            selectedColor: Colors.white,
-                            fillColor: Colors.green,
-                            borderColor: Colors.white,
-                            splashColor: Colors.green[300],
-                            children: [
-                              SizedBox(
-                                width: 70.w,
-                                height: 60.h,
-                                child: Center(
-                                    child: Text(
-                                  'Литры',
-                                  style: TextStyle(fontSize: 16.sp),
-                                )),
-                              ),
-                              SizedBox(
-                                width: 70.w,
-                                height: 60.h,
-                                child: Center(
-                                    child: Text(
-                                  'Штуки',
-                                  style: TextStyle(fontSize: 16.sp),
-                                )),
-                              ),
-                            ],
+                            inputDecorationTheme: inpDecStl,
+                            dropdownMenuEntries: payType,
+                            label: const Text('Способ оплаты'),
+                            width: 300.w,
+                            textStyle:
+                                TextStyle(fontSize: 15.sp, color: Colors.black),
                           ),
-                        ],
+                        ),
                       ),
-                    ),
-                    LocationSelectionWidget(
-                      initialAddress: adressController.text,
-                      onLocationSelected: (point, address) {
-                        setState(() {
-                          selectedLocation = point;
-                          selectedAddress = address;
-                          adressController.text = address;
-                          _checkButtonEnabled();
-                        });
-                        Navigator.of(context).pop();
-                      },
-                      labelText: 'Адрес доставки',
-                    ),
-                    Padding(
-                      padding: EdgeInsets.all(10.sp),
-                      child: SizedBox(
-                        width: 300.w,
-                        child: DropdownMenu(
-                          onSelected: (value) {
-                            setState(() {
-                              _selectedPaymentMethod = value;
-                              _checkButtonEnabled();
-                            });
-                          },
-                          inputDecorationTheme: inpDecStl,
-                          dropdownMenuEntries: payType,
-                          label: const Text('Способ оплаты'),
+                      Padding(
+                        padding: EdgeInsets.all(10.sp),
+                        child: SizedBox(
                           width: 300.w,
-                          textStyle:
-                              TextStyle(fontSize: 15.sp, color: Colors.black),
+                          child: TextField(
+                            controller: commentController,
+                            style:
+                                TextStyle(fontSize: 24.sp, color: Colors.black),
+                            decoration: inptDec1('Комментарий', true),
+                          ),
                         ),
                       ),
-                    ),
-                    Padding(
-                      padding: EdgeInsets.all(10.sp),
-                      child: SizedBox(
-                        width: 300.w,
-                        child: TextField(
-                          controller: commentController,
-                          style:
-                              TextStyle(fontSize: 24.sp, color: Colors.black),
-                          decoration: inptDec1('Комментарий', true),
-                        ),
-                      ),
-                    ),
-                    _isButtonEnabled
-                        ? Padding(
-                            padding: EdgeInsets.all(10.sp),
-                            child: SizedBox(
-                              height: 60.h,
-                              width: 300.w,
-                              child: FilledButton(
-                                onPressed: pushOrder,
-                                style: btnStl,
-                                child: const Text('Заказать'),
+                      _isButtonEnabled
+                          ? Padding(
+                              padding: EdgeInsets.all(10.sp),
+                              child: SizedBox(
+                                height: 60.h,
+                                width: 300.w,
+                                child: FilledButton(
+                                  onPressed: pushOrder,
+                                  style: btnStl,
+                                  child: const Text('Заказать'),
+                                ),
                               ),
-                            ),
-                          )
-                        : const SizedBox.shrink(),
-                    SizedBox(height: 20.h),
-                  ],
-                ),
-              ],
-            ),
-          ],
+                            )
+                          : const SizedBox.shrink(),
+                      SizedBox(height: 20.h),
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          ),
+          appBar: AppBar(
+            backgroundColor: Colors.transparent,
+            automaticallyImplyLeading: false,
+          ),
+          endDrawer: drawer(context),
         ),
-        appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          automaticallyImplyLeading: false,
-        ),
-        endDrawer: drawer(context),
       ),
     );
   }

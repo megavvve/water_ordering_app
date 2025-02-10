@@ -9,7 +9,7 @@ import 'package:vodovoz/domain/entities/order.dart';
 import 'package:vodovoz/domain/repositories/order_repository.dart';
 import 'package:vodovoz/domain/repositories/user/rating_repository.dart';
 import 'package:vodovoz/injection_container.dart';
-import 'package:vodovoz/presentation/widgets/enums/order_status.dart';
+import 'package:vodovoz/utils/enums/order_status.dart';
 import 'package:vodovoz/utils/constants.dart';
 
 class OrderRepositoryImpl implements OrderRepository {

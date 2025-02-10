@@ -10,7 +10,7 @@ import 'package:vodovoz/domain/repositories/order_repository.dart';
 import 'package:vodovoz/domain/repositories/user/rating_repository.dart';
 import 'package:vodovoz/domain/usecases/get_user_by_id.dart';
 import 'package:vodovoz/injection_container.dart';
-import 'package:vodovoz/presentation/widgets/enums/order_status.dart';
+import 'package:vodovoz/utils/enums/order_status.dart';
 import 'package:vodovoz/utils/constants.dart';
 
 part 'deliverer_order_event.dart';
@@ -42,7 +42,7 @@ class DelivererOrderBloc
     try {
       final orders = await orderRepository.getOrders();
 
-      // Check for any orders already accepted by the current user
+  
       Order? acceptedOrder;
       try {
         acceptedOrder = orders.firstWhere(
@@ -56,7 +56,6 @@ class DelivererOrderBloc
         acceptedOrder = null;
       }
 
-      // Check if there is any canceled order where isFinish == false
       Order? canceledOrder;
       try {
         canceledOrder = orders.firstWhere(
@@ -90,19 +89,19 @@ class DelivererOrderBloc
         emit(OrderAlreadyAccepted(acceptedOrder));
         return;
       }
-
+    print("ffffff:${orders.length}");
       final filteredOrders = orders
           .where((order) =>
               (order.status == OrderStatus.pending.name ||
                   order.status == OrderStatus.awaitingConfirmation.name) &&
               order.customerId != currentUserId &&
               !order.idsOfNotPossibleDeliverers.contains(currentUserId))
-          .where(
-            (x) =>
-                x.waterType == getIt<LocalSavedData>().getDelivererWaterType(),
-          )
+          // .where(
+          //   (x) =>
+          //       x.waterType == getIt<LocalSavedData>().getDelivererWaterType(),
+          // )
           .toList();
-
+  
       emit(OrderLoaded(filteredOrders));
     } catch (e) {
       emit(

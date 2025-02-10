@@ -6,7 +6,7 @@ import 'package:vodovoz/domain/entities/order.dart';
 import 'package:vodovoz/presentation/providers/order_user_bloc/order_user_bloc.dart';
 import 'package:vodovoz/presentation/providers/order_user_bloc/order_user_event.dart';
 import 'package:vodovoz/presentation/providers/order_user_bloc/order_user_state.dart';
-import 'package:vodovoz/presentation/widgets/enums/order_status.dart';
+import 'package:vodovoz/utils/enums/order_status.dart';
 import 'package:vodovoz/presentation/widgets/navigation/set_page.dart';
 import 'package:vodovoz/injection_container.dart';
 

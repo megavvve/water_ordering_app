@@ -34,7 +34,7 @@ Widget buildInProgressState(BuildContext context, Order order,
             color: Colors.black87,
           ),
         ),
-        SizedBox(height: 20.sp),
+        SizedBox(height: 22.sp),
         _buildOrderDetailRow('Адрес доставки:', geoOrder?.address ?? ''),
         _buildOrderDetailRow('Тип воды:', order.waterType),
         _buildOrderDetailRow(

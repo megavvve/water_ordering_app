@@ -2,6 +2,7 @@ import 'dart:io' as f;
 
 import 'package:appwrite/appwrite.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:vodovoz/data/datasources/local/local_saved_data.dart';
@@ -238,6 +239,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
+    bool canPop = Navigator.canPop(context);
     bool isButtonVisible = cityCopy != cityController.text.trim() ||
         nameCopy != fullNameController.text.trim() ||
         imageCopy != _image ||
@@ -251,76 +253,105 @@ class _ProfilePageState extends State<ProfilePage> {
           colors: [Colors.blueAccent, Colors.white, Colors.blueAccent],
         ),
       ),
-      child: Scaffold(
-        resizeToAvoidBottomInset:false,
-        appBar: AppBar(
-          backgroundColor: Colors.transparent,
-        ),
-        endDrawer: drawer(context),
-        backgroundColor: Colors.transparent,
-        body: Center(
-          child: ListView(
-            children: [
-              Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Padding(
-                    padding: EdgeInsets.all(10.sp),
-                    child: Text(
-                      'Профиль',
-                      style: TextStyle(fontSize: 34.sp, color: Colors.white),
-                    ),
-                  ),
-                  ProfileAvatar(
-                    image: _image,
-                    onPressed: _pickImage,
-                    isLoadingAvatar: isLoadingAvatar,
-                  ),
-                  SelectPhotoButton(onPressed: _pickImage),
-                  ProfileTextField(
-                    controller: fullNameController,
-                    labelText: 'ФИО полностью',
-                    enabled: true,
-                  ),
-                  LocationSelectionWidget(
-                    initialAddress: cityController.text,
-                    onLocationSelected: (point, address) {
-                      setState(() {
-                        cityController.text = address;
-                        longitude = point.longitude;
-                        latitude = point.latitude;
-                        _checkForChanges();
-                      });
-                      Navigator.of(context).pop();
-                    },
-                    labelText: 'Выбор города/населённого пункта',
-                  ),
-                  (!isEmailUser)
-                      ? EditButton(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute<void>(
-                                builder: (BuildContext context) =>
-                                    const RegPageForProfile(),
-                              ),
-                            );
-                          },
-                          phone: phone,
-                        )
-                      : PhoneTextField(
-                          controller: phoneController,
-                          labelText: 'Номер телефона'),
-                  if (isButtonVisible)
-                    SaveButton(
-                      onPressed: _saveProfileData,
-                    ),
-                  SizedBox(
-                    height: 30.h,
-                  ),
-                ],
+      child: PopScope(
+            canPop: canPop,
+    onPopInvokedWithResult: (bool didPop, _) async {
+      if (!didPop) {
+        final bool? confirmExit = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Выход из приложения'),
+            content: const Text('Вы точно хотите выйти?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Отмена'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('Выйти'),
               ),
             ],
+          ),
+        );
+
+        if (confirmExit ?? false) {
+          if (mounted) SystemNavigator.pop();
+        }
+      }
+    },
+        child: Scaffold(
+          resizeToAvoidBottomInset:false,
+          appBar: AppBar(
+            automaticallyImplyLeading: false,
+            backgroundColor: Colors.transparent,
+          ),
+          endDrawer: drawer(context),
+          backgroundColor: Colors.transparent,
+          body: Center(
+            child: ListView(
+              children: [
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.all(10.sp),
+                      child: Text(
+                        'Профиль',
+                        style: TextStyle(fontSize: 34.sp, color: Colors.white),
+                      ),
+                    ),
+                    ProfileAvatar(
+                      image: _image,
+                      onPressed: _pickImage,
+                      isLoadingAvatar: isLoadingAvatar,
+                    ),
+                    SelectPhotoButton(onPressed: _pickImage),
+                    ProfileTextField(
+                      controller: fullNameController,
+                      labelText: 'ФИО полностью',
+                      enabled: true,
+                    ),
+                    LocationSelectionWidget(
+                      initialAddress: cityController.text,
+                      onLocationSelected: (point, address) {
+                        setState(() {
+                          cityController.text = address;
+                          longitude = point.longitude;
+                          latitude = point.latitude;
+                          _checkForChanges();
+                        });
+                        Navigator.of(context).pop();
+                      },
+                      labelText: 'Выбор города/населённого пункта',
+                    ),
+                    (!isEmailUser)
+                        ? EditButton(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute<void>(
+                                  builder: (BuildContext context) =>
+                                      const RegPageForProfile(),
+                                ),
+                              );
+                            },
+                            phone: phone,
+                          )
+                        : PhoneTextField(
+                            controller: phoneController,
+                            labelText: 'Номер телефона'),
+                    if (isButtonVisible)
+                      SaveButton(
+                        onPressed: _saveProfileData,
+                      ),
+                    SizedBox(
+                      height: 30.h,
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),

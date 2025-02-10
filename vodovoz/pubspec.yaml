@@ -56,7 +56,7 @@ dependencies:
   flutter_map: ^7.0.2
   flutter_rating_bar: ^4.0.1
   intl: ^0.19.0
-  fluttertoast: ^8.2.6 
+  fluttertoast: ^8.2.11 
   yandex_mapkit: ^4.1.0
   permission_handler: ^11.3.1
 
@@ -69,7 +69,7 @@ dependencies:
   internet_connection_checker_plus: ^2.5.2
   connectivity_plus: ^6.0.5
   path_provider: ^2.1.4
-  dart_appwrite: ^13.0.0
+  dart_appwrite: ^12.2.0
   
 dependency_overrides:
   flutter_web_auth_2: 4.1.0

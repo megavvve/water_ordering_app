@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:vodovoz/data/datasources/remote/appwrite.dart';
@@ -18,7 +19,7 @@ import 'package:vodovoz/presentation/providers/order_user_bloc/order_user_event.
 import 'package:vodovoz/presentation/providers/order_user_bloc/order_user_state.dart';
 import 'package:vodovoz/presentation/screens/order_water/order_accept_page/widgets/build_in_progress_widget.dart';
 import 'package:vodovoz/presentation/screens/order_water/order_competed_page.dart';
-import 'package:vodovoz/presentation/widgets/enums/order_status.dart';
+import 'package:vodovoz/utils/enums/order_status.dart';
 import 'package:vodovoz/presentation/widgets/navigation/drawer.dart';
 import 'package:vodovoz/presentation/widgets/navigation/set_page.dart';
 
@@ -176,6 +177,7 @@ class OrderAcceptedPageState extends State<OrderAcceptedPage> {
 
   @override
   Widget build(BuildContext context) {
+     bool canPop = Navigator.canPop(context);
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
@@ -184,114 +186,139 @@ class OrderAcceptedPageState extends State<OrderAcceptedPage> {
           colors: [Colors.blueAccent, Colors.blueGrey],
         ),
       ),
-      child: BlocBuilder<OrderUserBloc, OrderUserState>(
-        builder: (context, state) {
-          if (state is OrderUserLoading) {
-            return const Center(
-                child: CircularProgressIndicator(
-              color: Colors.white,
-            ));
-          } else if (state is OrderUserCanceled) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              SetPageWithoutBack(context, 'orderingRedirect');
-            });
-            return SizedBox.shrink();
-          } else if (state is OrderUserError) {
-            return Center(
-              child: Text(
-                state.message,
-                style: const TextStyle(color: Colors.white),
+      child: PopScope(
+        canPop:canPop,
+        onPopInvokedWithResult:(bool didPop, _) async {
+      if (!didPop) {
+        final bool? confirmExit = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Выход из приложения'),
+            content: const Text('Вы точно хотите выйти?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Отмена'),
               ),
-            );
-          } else if (state is OrderUserLoaded) {
-            Order order = state.order;
-            if (deliverer == null) {
-              _fetchDeliverer(order);
-            }
-            if (order.status == OrderStatus.completed.name) {
-              if (mounted) {
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  Navigator.of(context).pushReplacement(
-                    MaterialPageRoute(
-                      builder: (context) => OrderCompletedPage(order: order),
-                    ),
-                  );
-                });
-              }
-              return const SizedBox.shrink();
-            }
-            if (order.status == OrderStatus.pending.name) {
-              if (mounted) {
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  SetPageWithoutBack(context, 'driversList');
-                });
-              }
-           
-              return const SizedBox.shrink();
-            }
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('Выйти',style: TextStyle(color: Colors.red),),
+              ),
+            ],
+          ),
+        );
 
-            return FutureBuilder<Geolocation?>(
-              future: geoRepo.getGeolocation(order.id),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(
-                    child: CircularProgressIndicator(
-                      color: Colors.white,
-                    ),
-                  );
-                } else if (snapshot.hasError) {
-                  return const Center(
-                    child: Text(
-                      'Error loading geolocation',
-                      style: TextStyle(color: Colors.white),
-                    ),
-                  );
-                } else if (!snapshot.hasData) {
-                  return const Center(
-                    child: Text(
-                      'No geolocation data available',
-                      style: TextStyle(color: Colors.white),
-                    ),
-                  );
+        if (confirmExit ?? false) {
+          // Закрываем приложение
+          if (mounted) SystemNavigator.pop();
+        }
+      }
+    },
+        child: BlocBuilder<OrderUserBloc, OrderUserState>(
+          builder: (context, state) {
+            if (state is OrderUserLoading) {
+              return const Center(
+                  child: CircularProgressIndicator(
+                color: Colors.white,
+              ));
+            } else if (state is OrderUserCanceled) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                SetPageWithoutBack(context, 'orderingRedirect');
+              });
+              return SizedBox.shrink();
+            } else if (state is OrderUserError) {
+              return Center(
+                child: Text(
+                  state.message,
+                  style: const TextStyle(color: Colors.white),
+                ),
+              );
+            } else if (state is OrderUserLoaded) {
+              Order order = state.order;
+              if (deliverer == null) {
+                _fetchDeliverer(order);
+              }
+              if (order.status == OrderStatus.completed.name) {
+                if (mounted) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    Navigator.of(context).pushReplacement(
+                      MaterialPageRoute(
+                        builder: (context) => OrderCompletedPage(order: order),
+                      ),
+                    );
+                  });
                 }
-
-                return Scaffold(
-                  endDrawer: drawer(context),
-                  backgroundColor: Colors.transparent,
-                  body: Padding(
-                    padding: EdgeInsets.all(20.0.sp),
-                    child: CustomScrollView(
-                      slivers: [
-                        const SliverAppBar(
-                          automaticallyImplyLeading: false,
-                          backgroundColor: Colors.transparent,
-                          expandedHeight: kToolbarHeight,
-                          centerTitle: true,
-                          title: Text(
-                            'Информация о заказе',
-                            style: TextStyle(color: Colors.white),
+                return const SizedBox.shrink();
+              }
+              if (order.status == OrderStatus.pending.name) {
+                if (mounted) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    SetPageWithoutBack(context, 'driversList');
+                  });
+                }
+             
+                return const SizedBox.shrink();
+              }
+        
+              return FutureBuilder<Geolocation?>(
+                future: geoRepo.getGeolocation(order.id),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                      ),
+                    );
+                  } else if (snapshot.hasError) {
+                    return const Center(
+                      child: Text(
+                        'Error loading geolocation',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    );
+                  } else if (!snapshot.hasData) {
+                    return const Center(
+                      child: Text(
+                        'No geolocation data available',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    );
+                  }
+        
+                  return Scaffold(
+                    endDrawer: drawer(context),
+                    backgroundColor: Colors.transparent,
+                    body: Padding(
+                      padding: EdgeInsets.all(20.0.sp),
+                      child: CustomScrollView(
+                        slivers: [
+                          const SliverAppBar(
+                            automaticallyImplyLeading: false,
+                            backgroundColor: Colors.transparent,
+                            expandedHeight: kToolbarHeight,
+                           
+                            pinned: true,
                           ),
-                          pinned: true,
-                        ),
-                        order.status == OrderStatus.accepted.name
-                            ? buildAcceptedState(context, order)
-                            : SliverToBoxAdapter(
-                                child: buildInProgressState(
-                                    context, order, snapshot.data, deliverer),
-                              ),
-                      ],
+                          order.status == OrderStatus.accepted.name
+                              ? buildAcceptedState(context, order)
+                              : SliverToBoxAdapter(
+                                  child: buildInProgressState(
+                                      context, order, snapshot.data, deliverer),
+                                ),
+                        ],
+                      ),
                     ),
-                  ),
-                );
-              },
-            );
-          } else {
-            return const Center(
-                child: CircularProgressIndicator(
-              color: Colors.white,
-            ));
-          }
-        },
+                  );
+                },
+              );
+            } else {
+              return const Center(
+                  child: CircularProgressIndicator(
+                color: Colors.white,
+              ));
+            }
+          },
+        ),
       ),
     );
   }

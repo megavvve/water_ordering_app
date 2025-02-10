@@ -78,6 +78,7 @@ class GeoService {
   }) async {
     try {
       List<Order> nearbyOrders = [];
+      print(orders.length);
       for (final Order order in orders) {
         final Geolocation? orderGeolocation =
             await getIt<GeolocationRepository>().getGeolocation(order.id);

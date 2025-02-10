@@ -12,12 +12,12 @@ import 'package:vodovoz/domain/repositories/geolocation_repository.dart';
 import 'package:vodovoz/domain/repositories/storage_repository.dart';
 import 'package:vodovoz/domain/repositories/user/user_repository.dart';
 import 'package:vodovoz/injection_container.dart';
-import 'package:vodovoz/presentation/providers/form_change_notifier.dart';
-import 'package:vodovoz/presentation/widgets/enums/user_type.dart';
-import 'package:vodovoz/presentation/widgets/widgets_for_getting.dart';
+//import 'package:vodovoz/presentation/providers/form_change_notifier.dart';
+import 'package:vodovoz/utils/enums/user_type.dart';
+//import 'package:vodovoz/presentation/widgets/widgets_for_getting.dart';
 import 'package:vodovoz/presentation/widgets/navigation/drawer.dart';
 import 'package:vodovoz/presentation/widgets/navigation/set_page.dart';
-import 'package:vodovoz/utils/constants.dart';
+//import 'package:vodovoz/utils/constants.dart';
 
 import 'package:vodovoz/utils/input_decorations.dart';
 
@@ -33,7 +33,7 @@ class StartDeliveryPage extends StatefulWidget {
 class _StartDeliveryPageState extends State<StartDeliveryPage> {
   UserModel? user;
   File? avatar;
-  String? selectedWaterType;
+  String? selectedWaterType = "бутилированная";
   String? fileId;
   final userid = LocalSavedData().getUserId();
   final UserRepository userRepository = getIt<UserRepository>();
@@ -134,6 +134,7 @@ class _StartDeliveryPageState extends State<StartDeliveryPage> {
         ),
       ),
       child: Scaffold(
+        
         backgroundColor: Colors.transparent,
         appBar: AppBar(
           backgroundColor: Colors.transparent,
@@ -244,36 +245,36 @@ class _StartDeliveryPageState extends State<StartDeliveryPage> {
                                   ),
                                 ),
                               ),
-                              Padding(
-                                padding: EdgeInsets.all(10.sp),
-                                child: SizedBox(
-                                  height: 60.h,
-                                  width: 300.w,
-                                  child: DropdownMenu<dynamic>(
+                              // Padding(
+                              //   padding: EdgeInsets.all(10.sp),
+                              //   child: SizedBox(
+                              //     height: 60.h,
+                              //     width: 300.w,
+                              //     child: DropdownMenu<dynamic>(
                               
-                                    onSelected: (value) {
-                                      setState(() {
-                                        selectedWaterType =
-                                            getWaterTypeLabel(value);
-                                        getIt<FormChangeNotifier>().watertype =
-                                            getWaterTypeLabel(value);
-                                        LocalSavedData().saveDelivererWaterType(
-                                          selectedWaterType ??
-                                              LocalSavedData()
-                                                  .getDelivererWaterType(),
-                                        );
-                                      });
-                                    },
-                                    inputDecorationTheme: inpDecStl,
-                                    dropdownMenuEntries: waterTypes,
-                                    label: const Text('Тип воды'),
-                                    width: 300.w,
-                                    textStyle: TextStyle(
-                                        fontSize: 15.sp, color: Colors.black),
+                              //       onSelected: (value) {
+                              //         setState(() {
+                              //           selectedWaterType =
+                              //               getWaterTypeLabel(value);
+                              //           getIt<FormChangeNotifier>().watertype =
+                              //               getWaterTypeLabel(value);
+                              //           LocalSavedData().saveDelivererWaterType(
+                              //             selectedWaterType ??
+                              //                 LocalSavedData()
+                              //                     .getDelivererWaterType(),
+                              //           );
+                              //         });
+                              //       },
+                              //       inputDecorationTheme: inpDecStl,
+                              //       dropdownMenuEntries: waterTypes,
+                              //       label: const Text('Тип воды'),
+                              //       width: 300.w,
+                              //       textStyle: TextStyle(
+                              //           fontSize: 15.sp, color: Colors.black),
                                         
-                                  ),
-                                ),
-                              ),
+                              //     ),
+                              //   ),
+                              // ),
                               Row(
                                 crossAxisAlignment: CrossAxisAlignment.center,
                                 mainAxisAlignment: MainAxisAlignment.center,
@@ -287,7 +288,7 @@ class _StartDeliveryPageState extends State<StartDeliveryPage> {
                                           MainAxisAlignment.center,
                                       children: [
                                         Text(
-                                          'Стоимость\n за литр',
+                                          'Стоимость за литр',
                                           style: TextStyle(
                                               fontSize: 19.sp,
                                               color: Colors.white),
@@ -296,7 +297,8 @@ class _StartDeliveryPageState extends State<StartDeliveryPage> {
                                           padding: EdgeInsets.all(5.w),
                                           child: SizedBox(
                                             height: 60.h,
-                                            width: 125.w,
+                                            //width: 125.w,
+                                            width: 170.w,
                                             child: TextField(
                                               keyboardType:
                                                   TextInputType.number,
@@ -313,41 +315,41 @@ class _StartDeliveryPageState extends State<StartDeliveryPage> {
                                       ],
                                     ),
                                   ),
-                                  Padding(
-                                    padding: EdgeInsets.all(5.w),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.center,
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Text(
-                                          'Стоимость\n за штуку',
-                                          style: TextStyle(
-                                              fontSize: 19.sp,
-                                              color: Colors.white),
-                                        ),
-                                        Padding(
-                                          padding: EdgeInsets.all(5.w),
-                                          child: SizedBox(
-                                            height: 60.h,
-                                            width: 125.w,
-                                            child: TextField(
-                                              keyboardType:
-                                                  TextInputType.number,
-                                              focusNode: _pricePerUnitFocus,
-                                              controller:
-                                                  _pricePerUnitController,
-                                              style: TextStyle(
-                                                  fontSize: 24.sp,
-                                                  color: Colors.black),
-                                              decoration: inptDec1NoLabel(true),
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
+                                  // Padding(
+                                  //   padding: EdgeInsets.all(5.w),
+                                  //   child: Column(
+                                  //     crossAxisAlignment:
+                                  //         CrossAxisAlignment.center,
+                                  //     mainAxisAlignment:
+                                  //         MainAxisAlignment.center,
+                                  //     children: [
+                                  //       Text(
+                                  //         'Стоимость\n за штуку',
+                                  //         style: TextStyle(
+                                  //             fontSize: 19.sp,
+                                  //             color: Colors.white),
+                                  //       ),
+                                  //       Padding(
+                                  //         padding: EdgeInsets.all(5.w),
+                                  //         child: SizedBox(
+                                  //           height: 60.h,
+                                  //           width: 125.w,
+                                  //           child: TextField(
+                                  //             keyboardType:
+                                  //                 TextInputType.number,
+                                  //             focusNode: _pricePerUnitFocus,
+                                  //             controller:
+                                  //                 _pricePerUnitController,
+                                  //             style: TextStyle(
+                                  //                 fontSize: 24.sp,
+                                  //                 color: Colors.black),
+                                  //             decoration: inptDec1NoLabel(true),
+                                  //           ),
+                                  //         ),
+                                  //       ),
+                                  //     ],
+                                  //   ),
+                                  // ),
                                 ],
                               ),
                               Padding(

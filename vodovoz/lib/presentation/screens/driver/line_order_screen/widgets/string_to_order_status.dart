@@ -1,4 +1,4 @@
-import 'package:vodovoz/presentation/widgets/enums/order_status.dart';
+import 'package:vodovoz/utils/enums/order_status.dart';
 
 OrderStatus stringToOrderStatus(String status) {
   switch (status) {

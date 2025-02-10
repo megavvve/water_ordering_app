@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:vodovoz/data/datasources/remote/appwrite.dart';
@@ -50,48 +51,73 @@ final orderRepo = getIt<OrderRepository>();
 
   }
 
-  @override
-  void dispose() {
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: BlocBuilder<OrderUserBloc, OrderUserState>(
-        builder: (context, state) {
-          if (state is OrderUserLoaded && orderPoint != null) {
-            return Stack(
-              children: [
-                YandexMap(
-                  onMapCreated: (YandexMapController controller) {
-                    _yandexMapController = controller;
-                    _yandexMapController.moveCamera(
-                      CameraUpdate.newCameraPosition(
-                        CameraPosition(target: orderPoint!, zoom: 16),
-                      ),
-                    );
-                  },
-                  // mapObjects: _mapController.updatePlacemarks(
-                  //   state.order,
-                  //   context.read<ActiveDeliveryProvider>().deliverers,
-                  //   orderPoint!,
-                  // ),
-                ),
-                Positioned(
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  child: _buildBottomSheet(),
-                ),
-              ],
-            );
-          } else if (state is OrderUserLoading || orderPoint == null) {
-            return const Center(child: CircularProgressIndicator());
-          } else {
-            return const Center(child: Text('Ошибка загрузки данных'));
-          }
-        },
+    bool canPop = Navigator.canPop(context);
+    return PopScope(
+            canPop: canPop,
+    onPopInvokedWithResult: (bool didPop, _) async {
+      if (!didPop) {
+        final bool? confirmExit = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Выход из приложения'),
+            content: const Text('Вы точно хотите выйти?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Отмена'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('Выйти'),
+              ),
+            ],
+          ),
+        );
+
+        if (confirmExit ?? false) {
+          if (mounted) SystemNavigator.pop();
+        }
+      }
+    },
+      child: Scaffold(
+        body: BlocBuilder<OrderUserBloc, OrderUserState>(
+          builder: (context, state) {
+            if (state is OrderUserLoaded && orderPoint != null) {
+              return Stack(
+                children: [
+                  YandexMap(
+                    onMapCreated: (YandexMapController controller) {
+                      _yandexMapController = controller;
+                      _yandexMapController.moveCamera(
+                        CameraUpdate.newCameraPosition(
+                          CameraPosition(target: orderPoint!, zoom: 16),
+                        ),
+                      );
+                    },
+                    // mapObjects: _mapController.updatePlacemarks(
+                    //   state.order,
+                    //   context.read<ActiveDeliveryProvider>().deliverers,
+                    //   orderPoint!,
+                    // ),
+                  ),
+                  Positioned(
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    child: _buildBottomSheet(),
+                  ),
+                ],
+              );
+            } else if (state is OrderUserLoading || orderPoint == null) {
+              return const Center(child: CircularProgressIndicator());
+            } else {
+              return const Center(child: Text('Ошибка загрузки данных'));
+            }
+          },
+        ),
       ),
     );
   }

@@ -36,7 +36,7 @@ Drawer drawer(BuildContext context) {
                   style: TextStyle(fontSize: 24.sp, color: Colors.black),
                 ),
                 onTap: () {
-                  SetPageWithoutBack(context, 'profile');
+                  SetPageWithBack(context, 'profile');
                 },
               ),
               const Divider(),
@@ -46,7 +46,7 @@ Drawer drawer(BuildContext context) {
                   style: TextStyle(fontSize: 24.sp, color: Colors.black),
                 ),
                 onTap: () {
-                  SetPageWithoutBack(context, 'history');
+                  SetPageWithBack(context, 'history');
                 },
               ),
               const Divider(),
@@ -56,17 +56,17 @@ Drawer drawer(BuildContext context) {
               //     style: TextStyle(fontSize: 24.sp, color: Colors.black),
               //   ),
               //   onTap: () {
-              //     SetPageWithoutBack(context, 'activeOrders');
+              //     SetPageWithBack(context, 'activeOrders');
               //   },
               // ),
-              //  const Divider(),
+              //  
               ListTile(
                 title: Text(
                   'Сделать заказ',
                   style: TextStyle(fontSize: 24.sp, color: Colors.black),
                 ),
                 onTap: () {
-                  SetPageWithoutBack(context, 'orderingRedirect');
+                  SetPageWithBack(context, 'orderingRedirect');
                 },
               ),
               const Divider(),
@@ -90,21 +90,31 @@ Drawer drawer(BuildContext context) {
                       }
                     }
                   }
-                  SetPageWithoutBack(context, driverRoute);
+                  SetPageWithBack(context, driverRoute);
                 },
               ),
               const Divider(),
-              isUserIsDeliverer == true
-                  ? ListTile(
-                      title: Text(
-                        'Баланс водовоза',
-                        style: TextStyle(fontSize: 24.sp, color: Colors.black),
-                      ),
-                      onTap: () {
-                        SetPageWithoutBack(context, 'delivererBalance');
-                      },
-                    )
-                  : SizedBox.shrink(),
+              ListTile(
+                title: Text(
+                  "Оставить отзыв, жалобу или предложение",
+                  style: TextStyle(fontSize: 24.sp, color: Colors.black),
+                ),
+                onTap: () async {
+                  SetPageWithBack(context, 'feedback');
+                },
+              ),
+              // const Divider(),
+              // isUserIsDeliverer == true
+              //     ? ListTile(
+              //         title: Text(
+              //           'Баланс водовоза',
+              //           style: TextStyle(fontSize: 24.sp, color: Colors.black),
+              //         ),
+              //         onTap: () {
+              //           SetPageWithBack(context, 'delivererBalance');
+              //         },
+              //       )
+              //     : SizedBox.shrink(),
               // const Divider(),
               // ListTile(
               //   title: Text(
@@ -138,7 +148,7 @@ Drawer drawer(BuildContext context) {
               //     style: TextStyle(fontSize: 24.sp, color: Colors.black),
               //   ),
               //   onTap: () {
-              //     SetPageWithoutBack(context, 'adIntegration');
+              //     SetPageWithBack(context, 'adIntegration');
               //   },
               // ),
               // const Divider(),

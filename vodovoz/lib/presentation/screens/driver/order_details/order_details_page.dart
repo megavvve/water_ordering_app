@@ -12,7 +12,7 @@ import 'package:vodovoz/presentation/screens/driver/order_details/widget/order_d
 import 'package:vodovoz/presentation/screens/driver/order_details/widget/show_cancelation_diaolg.dart';
 import 'package:vodovoz/presentation/screens/driver/order_details/widget/show_completition_dialog.dart';
 import 'package:vodovoz/presentation/screens/driver/order_details/widget/show_confirmation_dialogue.dart';
-import 'package:vodovoz/presentation/widgets/enums/order_status.dart';
+import 'package:vodovoz/utils/enums/order_status.dart';
 import 'package:vodovoz/presentation/widgets/navigation/drawer.dart';
 import 'package:vodovoz/presentation/widgets/navigation/set_page.dart';
 
@@ -36,11 +36,7 @@ class OrderDetailsPage extends StatelessWidget {
         automaticallyImplyLeading: false,
         toolbarHeight: 30.h,
         backgroundColor: Colors.blueAccent,
-        centerTitle: true,
-        title: Text(
-          'Детали заказа',
-          style: TextStyle(fontSize: 20.sp, color: Colors.white),
-        ),
+        
       ),
       body: BlocBuilder<DelivererOrderBloc, DelivererOrderState>(
         builder: (context, state) {

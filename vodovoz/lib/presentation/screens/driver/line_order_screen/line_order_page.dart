@@ -16,7 +16,7 @@ import 'package:vodovoz/injection_container.dart';
 import 'package:vodovoz/presentation/providers/delivery_order_bloc/deliverer_order_bloc.dart';
 import 'package:vodovoz/presentation/screens/driver/line_order_screen/widgets/order_card.dart';
 import 'package:vodovoz/presentation/screens/driver/line_order_screen/widgets/show_cancel_dialogue.dart';
-import 'package:vodovoz/presentation/widgets/enums/user_type.dart';
+import 'package:vodovoz/utils/enums/user_type.dart';
 import 'package:vodovoz/presentation/widgets/navigation/drawer.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:vodovoz/presentation/widgets/navigation/set_page.dart';
@@ -182,7 +182,7 @@ class LineOrderPageState extends State<LineOrderPage> {
                     DropdownButton<double>(
                       value: searchRadiusInKm,
                       dropdownColor: Colors.white,
-                      items: [5, 10, 15, 20, 25].map((int value) {
+                      items: [5, 10, 15, 20,25,50].map((int value) {
                         return DropdownMenuItem<double>(
                           value: value.toDouble(),
                           child: Text(value.toString()),
@@ -235,7 +235,6 @@ class LineOrderPageState extends State<LineOrderPage> {
                             );
                           } else if (snapshot.hasData) {
                             final userPosition = snapshot.data!;
-
                             return FutureBuilder<List<Order>>(
                               future: getIt<GeoService>().searchOrdersNearby(
                                 orders: state.orders,

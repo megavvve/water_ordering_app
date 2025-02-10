@@ -1,5 +1,5 @@
 import 'package:vodovoz/domain/entities/order.dart';
-import 'package:vodovoz/presentation/widgets/enums/order_status.dart';
+import 'package:vodovoz/utils/enums/order_status.dart';
 
 Order? findOrderWithIdAndStatus(
     List<Order> orders, String userId, List<OrderStatus> statuses) {
